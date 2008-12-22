@@ -357,8 +357,7 @@ int set_window_properties(Display *dpy, Window toplevel){
 }
 
 int set_window_geometry(Display *dpy, Window win, char *geometry){
-	int xpos, ypos;
-	unsigned int width, height, return_mask;
+	int xpos, ypos, width, height, return_mask, gravity;
 	XSizeHints	size_hints;
 
 	size_hints.flags = PMinSize | PMaxSize;
@@ -369,7 +368,8 @@ int set_window_geometry(Display *dpy, Window win, char *geometry){
 
 	if (geometry){
 
-		return_mask = XParseGeometry(geometry, &xpos, &ypos, &width, &height);
+		return_mask = XWMGeometry(dpy, DefaultScreen(dpy), geometry,
+				NULL, 0, &size_hints, &xpos, &ypos, &width, &height, &gravity);
 
 		if (return_mask & (WidthValue | HeightValue)){
 			fprintf(stderr, "Can't resize windows\n");
