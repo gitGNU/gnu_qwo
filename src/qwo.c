@@ -54,7 +54,7 @@
 #define GRID_COLOR				"orange"
 
 #define CONFIG_FILE		"/.qworc"
-#define MAX_CONFIG_PATH 50
+#define MAX_CONFIG_PATH 256
 
 #define DATA_PATH		DATADIR "/" PACKAGE_NAME "/"
 
