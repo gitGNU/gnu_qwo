@@ -93,17 +93,17 @@ char charset[][MAX_REGIONS] = {
 };
 
 KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
-	{XK_KP_5, 0xffff, XK_Up, 0xffff, XK_Right, XK_greater, XK_KP_0, XK_less, XK_Left},
+	{XK_KP_5, XK_Page_Up, XK_Up, 0xffff, XK_Right, 0xffff, XK_KP_0, XK_Page_Down, XK_Left},
 	{0xffff, XK_KP_1, XK_Tab, XK_KP_Multiply, 0xffff, 0xffff, 0xffff, XK_parenleft, XK_slash},
-	{XK_Down, XK_exclam, XK_KP_2, XK_minus, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff},
+	{XK_Down, XK_exclam, XK_KP_2, XK_minus, XK_greater, 0xffff, 0xffff, 0xffff, XK_less},
 	{0xffff, XK_equal, XK_dollar, XK_KP_3, XK_backslash, XK_parenright, 0xffff, 0xffff, 0xffff},
-	{0xffff, 0xffff, 0xffff, XK_plus, XK_KP_6, XK_Return, 0xffff, 0xffff, 0xffff},
-	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_bracketright, XK_at, 0xffff},
-	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_KP_8, XK_braceright, 0xffff},
+	{XK_Home, 0xffff, 0xffff, XK_plus, XK_KP_6, XK_Return, XK_Alt_L, 0xffff, 0xffff},
+	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_bracketright,XK_braceright, 0xffff},
+	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_KP_8, XK_at, 0xffff},
 	{0xffff, XK_ampersand, 0xffff, 0xffff, 0xffff, XK_braceleft, XK_bracketleft, XK_KP_7, XK_numbersign},
-	{0xffff, XK_Escape, 0xffff, 0xffff, 0xffff, 0xffff, XK_Control_L, XK_quotedbl, XK_KP_4}};
+	{XK_End, XK_Escape, 0xffff, 0xffff, 0xffff, 0xffff, XK_Control_L, XK_quotedbl, XK_KP_4}};
 
-static KeyCode Shift_code, Control_code;
+static KeyCode Shift_code, Control_code, Alt_code;
 
 KeySym custom_charset[MAX_REGIONS - 1][MAX_CHAR_PER_REGION];
 
@@ -386,6 +386,7 @@ int set_window_geometry(Display *dpy, Window win, char *geometry){
 int init_keycodes(Display *dpy){
 	Shift_code = XKeysymToKeycode(dpy, XK_Shift_L);
 	Control_code = XKeysymToKeycode(dpy, XK_Control_L);
+	Alt_code = XKeysymToKeycode(dpy, XK_Alt_L);
 
 	return 0;
 }
@@ -427,6 +428,7 @@ int main(int argc, char **argv)
 	int buffer_count = 0;
 	int shift_modifier = 0;
 	int ctrl_modifier = 0;
+	int alt_key = 0;
 	int help_screen = 0;
 	int i, status = 0;
 	Time last_cross_timestamp = 0L;
@@ -546,7 +548,7 @@ int main(int argc, char **argv)
 				if (buffer[0] == 0 && !region && e.xbutton.time - last_pressed > PRESS_DELAY)
 					break;
 				ksym = char_free[buffer[0]][region];
-				if (ksym != XK_Control_L) {
+				if ((ksym != XK_Control_L) && (ksym != XK_Alt_L)) {
 					code = XKeysymToKeycode(dpy, ksym);
 					for (state_mod = 0; state_mod < 4; state_mod++) {
 						if (XKeycodeToKeysym(dpy, code, state_mod) == ksym ) {
@@ -559,8 +561,11 @@ int main(int argc, char **argv)
 					XTestFakeKeyEvent(dpy, code, False, 0);
 					if (state_mod)
 						XTestFakeKeyEvent(dpy, Shift_code, False, 0);
-				} else
+				} else if (ksym == XK_Alt_L) {
+					alt_key = 1;
+				} else if (ksym == XK_Control_L) {
 					ctrl_modifier = 1;
+				}
 				buffer_count = 0;
 				break;
 			case EnterNotify:
@@ -648,6 +653,12 @@ int main(int argc, char **argv)
 							XTestFakeKeyEvent(dpy, code, False, 0);
 							XTestFakeKeyEvent(dpy, Control_code, False, 0);
 							ctrl_modifier = 0;
+						} else if (alt_key) {
+							XTestFakeKeyEvent(dpy, Alt_code, True, 0);
+							XTestFakeKeyEvent(dpy, code, True, 0);
+							XTestFakeKeyEvent(dpy, code, False, 0);
+							XTestFakeKeyEvent(dpy, Alt_code, False, 0);
+							alt_key = 0;
 						} else {
 							XTestFakeKeyEvent(dpy, code, True, 0);
 							XTestFakeKeyEvent(dpy, code, False, 0);
