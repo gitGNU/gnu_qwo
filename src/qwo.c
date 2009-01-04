@@ -1,7 +1,7 @@
 /*
  *  qwo: quikwriting for OpenMoko
  *
- *  Copyright (C) 2008 Charles Clement caratorn _at_ gmail.com
+ *  Copyright (C) 2008, 2009 Charles Clement caratorn _at_ gmail.com
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
