@@ -144,8 +144,7 @@ typedef enum {
 	KeyboardToggle
 } KeyboardOperation;
 
-static Atom wmDeleteMessage, mtp_im_invoker_command,mb_im_invoker_command,
-		net_wm_state_skip_taskbar, net_wm_state_skip_pager, net_wm_state;
+static Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
 void init_regions(Display *dpy, Window toplevel)
 {
@@ -327,6 +326,8 @@ int read_config(char *config_path, char **geometry)
 
 int set_window_properties(Display *dpy, Window toplevel){
 	XWMHints *wm_hints;
+	Atom net_wm_state_skip_taskbar, net_wm_state_skip_pager, net_wm_state,
+		net_wm_window_type, net_wm_window_type_toolbar;
 
 	XStoreName(dpy, toplevel, "Keyboard");
 
@@ -347,11 +348,15 @@ int set_window_properties(Display *dpy, Window toplevel){
 	net_wm_state_skip_pager = XInternAtom(dpy, "_NET_WM_STATE_SKIP_PAGER", False);
 	net_wm_state_skip_taskbar = XInternAtom(dpy, "_NET_WM_STATE_SKIP_TASKBAR", False);
 	net_wm_state = XInternAtom (dpy, "_NET_WM_STATE", False);
+	net_wm_window_type = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE" , False);
+	net_wm_window_type_toolbar = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_TOOLBAR", False);
 
 	XChangeProperty (dpy, toplevel, net_wm_state, XA_ATOM, 32, PropModeAppend,
 			(unsigned char *)&net_wm_state_skip_taskbar, 1);
 	XChangeProperty (dpy, toplevel, net_wm_state, XA_ATOM, 32, PropModeAppend,
 			(unsigned char *)&net_wm_state_skip_pager, 1);
+	XChangeProperty(dpy, toplevel, net_wm_window_type, XA_ATOM, 32,
+			PropModeReplace, (unsigned char *) &net_wm_window_type_toolbar, 1);
 
 	return 0;
 }
