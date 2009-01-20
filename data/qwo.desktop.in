@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=@PACKAGE_NAME@
+Comment=An input method for touchscreens
+Version=@PACKAGE_VERSION@
+Type=Application
+Exec=qwo
+Terminal=false
+Categories=Utility;Keyboard
+X-MB-SingleInstance=true
+Icon=qwo

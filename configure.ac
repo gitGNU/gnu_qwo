@@ -31,9 +31,11 @@ else
 fi
 
 
-AC_OUTPUT([
+AC_CONFIG_FILES([
 Makefile
 src/Makefile
 data/Makefile
+data/qwo.desktop
 ])
 
+AC_OUTPUT
