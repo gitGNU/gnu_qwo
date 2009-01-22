@@ -49,7 +49,6 @@
 #define MAX_POINTS  9
 
 #define DELTA                   (WIDTH >> 4)
-#define BORDER_WIDTH            3
 
 #define GRID_COLOR				"orange"
 
