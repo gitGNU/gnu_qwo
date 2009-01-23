@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <getopt.h>
 #include <ctype.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -424,9 +425,9 @@ int main(int argc, char **argv)
 	char *config_path = NULL;
 	char *config_geometry = NULL;
 	char *switch_geometry = NULL;
+
 	int loaded_config = 0;
 	int run = 1;
-	int options;
 	int visible = 0;
 	int buffer[MAX_GESTURES_BUFFER];
 	int buffer_count = 0;
@@ -437,9 +438,17 @@ int main(int argc, char **argv)
 	int i, status = 0;
 	Time last_cross_timestamp = 0L;
 	Time last_pressed = 0L;
+	int options;
+	int option_index = 0;
+	static struct option long_options[] = {
+		{"config",   required_argument, 0, 'c'},
+		{"geometry", required_argument, 0, 'g'},
+		{0, 0, 0, 0}
+	};
 
 
-	while ((options = getopt(argc, argv, "c:g:")) != -1)
+	while ((options = getopt_long(argc, argv, "c:g:", long_options,
+					&option_index)) != -1)
 	{
 		switch(options){
 			case 'c':
