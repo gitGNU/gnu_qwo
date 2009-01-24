@@ -101,7 +101,7 @@ KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
 	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_bracketright,XK_braceright, 0xffff},
 	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_KP_8, XK_at, 0xffff},
 	{0xffff, XK_ampersand, 0xffff, 0xffff, 0xffff, XK_braceleft, XK_bracketleft, XK_KP_7, XK_numbersign},
-	{XK_End, XK_Escape, 0xffff, 0xffff, 0xffff, 0xffff, XK_Control_L, XK_quotedbl, XK_KP_4}};
+	{XK_End, XK_Escape, 0xffff, 0xffff, 0xffff, 0xffff, XK_Control_L, XK_Select, XK_KP_4}};
 
 static KeyCode Shift_code, Control_code, Alt_code;
 
@@ -561,23 +561,28 @@ int main(int argc, char **argv)
 				if (buffer[0] == 0 && !region && e.xbutton.time - last_pressed > PRESS_DELAY)
 					break;
 				ksym = char_free[buffer[0]][region];
-				if ((ksym != XK_Control_L) && (ksym != XK_Alt_L)) {
+				if (ksym == XK_Alt_L) {
+					alt_key = 1;
+				} else if (ksym == XK_Control_L) {
+					ctrl_modifier = 1;
+				} else if (ksym == XK_Select) {
+					help_screen = !help_screen;
+					update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+				} else {
 					code = XKeysymToKeycode(dpy, ksym);
+
 					for (state_mod = 0; state_mod < 4; state_mod++) {
 						if (XKeycodeToKeysym(dpy, code, state_mod) == ksym ) {
 							break;
 						}
 					}
+
 					if (state_mod)
 						XTestFakeKeyEvent(dpy, Shift_code, True, 0);
 					XTestFakeKeyEvent(dpy, code, True, 0);
 					XTestFakeKeyEvent(dpy, code, False, 0);
 					if (state_mod)
 						XTestFakeKeyEvent(dpy, Shift_code, False, 0);
-				} else if (ksym == XK_Alt_L) {
-					alt_key = 1;
-				} else if (ksym == XK_Control_L) {
-					ctrl_modifier = 1;
 				}
 				buffer_count = 0;
 				break;
@@ -637,14 +642,12 @@ int main(int argc, char **argv)
 							}
 							XTestFakeKeyEvent(dpy, code, True, 0);
 							XTestFakeKeyEvent(dpy, code, False, 0);
-						} else if (shift_modifier || help_screen) {
-							shift_modifier = help_screen = 0;
+						} else if (shift_modifier) {
+							shift_modifier = 0;
 						} else if (buffer_count == 4) {
 							shift_modifier = 1;
 						} else if (buffer_count == 5) {
 							shift_modifier = 2;
-						} else if (buffer_count == 6) {
-							help_screen = 1;
 						}
 
 						if (buffer_count != 2) {
