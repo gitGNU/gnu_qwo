@@ -1,5 +1,5 @@
 /*
- *  qwo: quikwriting for OpenMoko
+ *  qwo: An input method for touchscreens.
  *
  *  Copyright (C) 2008, 2009 Charles Clement caratorn _at_ gmail.com
  *
@@ -81,6 +81,11 @@
 #define DIRECTION(a, b)  \
 		(abs(b - a) == 1) ? ( (b - a) == 1) : (b - a) < 0
 
+static const char *copyright_notice = "\
+Copyright (C) 2008-2009 Charles Clement\n\
+qwo comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
+and you are welcome to redistribute it under certain conditions.\n";
+
 char charset[][MAX_REGIONS] = {
 		"a,z?>>>c",
 		"deb?????",
@@ -145,6 +150,22 @@ typedef enum {
 } KeyboardOperation;
 
 static Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
+
+void usage(){
+	fprintf(stdout,
+		"Usage: qwo [options]\n\n"
+		"Options:\n"
+		"  -g, --geometry {+-}<xoffset>{+-}<yoffset>	specify window placement\n"
+		"  -c, --config <file>	use configuration file <file> instead of ~/.qworc\n"
+		"  -h, --help      	Print this help\n"
+		"  -v, --version   	Print version information\n"
+		);
+}
+
+void print_version(){
+	fprintf(stdout, PACKAGE " " VERSION " ");
+	fprintf(stdout, copyright_notice);
+}
 
 void init_regions(Display *dpy, Window toplevel)
 {
@@ -276,7 +297,7 @@ int read_config(char *config_path, char **geometry)
 	const config_setting_t *line;
 
 	if ((file = fopen(config_path, "r")) == NULL) {
-		fprintf(stderr, "%s : Can't open configuration file\n", config_path);
+		fprintf(stderr, "Can't open configuration file %s\n", config_path);
 		return 0;
 	}
 	config_init(&configuration);
@@ -441,13 +462,15 @@ int main(int argc, char **argv)
 	int options;
 	int option_index = 0;
 	static struct option long_options[] = {
+		{"help",     no_argument      , 0, 'h'},
+		{"version",  no_argument      , 0, 'v'},
 		{"config",   required_argument, 0, 'c'},
 		{"geometry", required_argument, 0, 'g'},
 		{0, 0, 0, 0}
 	};
 
 
-	while ((options = getopt_long(argc, argv, "c:g:", long_options,
+	while ((options = getopt_long(argc, argv, "c:g:hv", long_options,
 					&option_index)) != -1)
 	{
 		switch(options){
@@ -457,6 +480,12 @@ int main(int argc, char **argv)
 			case 'g':
 				switch_geometry = optarg;
 				break;
+			case 'v':
+				print_version();
+				exit(0);
+			default:
+				usage();
+				exit(0);
 		}
 	}
 
