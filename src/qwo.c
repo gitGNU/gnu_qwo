@@ -1,5 +1,5 @@
 /*
- *  qwo: quikwriting for OpenMoko
+ *  qwo: An input method for touchscreens.
  *
  *  Copyright (C) 2008, 2009 Charles Clement caratorn _at_ gmail.com
  *
