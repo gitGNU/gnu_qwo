@@ -81,6 +81,11 @@
 #define DIRECTION(a, b)  \
 		(abs(b - a) == 1) ? ( (b - a) == 1) : (b - a) < 0
 
+static const char *copyright_notice = "\
+Copyright (C) 2008-2009 Charles Clement\n\
+qwo comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
+and you are welcome to redistribute it under certain conditions.\n";
+
 char charset[][MAX_REGIONS] = {
 		"a,z?>>>c",
 		"deb?????",
@@ -145,6 +150,11 @@ typedef enum {
 } KeyboardOperation;
 
 static Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
+
+void print_version(){
+	fprintf(stdout, PACKAGE " " VERSION " ");
+	fprintf(stdout, copyright_notice);
+}
 
 void init_regions(Display *dpy, Window toplevel)
 {
@@ -441,13 +451,14 @@ int main(int argc, char **argv)
 	int options;
 	int option_index = 0;
 	static struct option long_options[] = {
+		{"version",  no_argument, 0, 'v'},
 		{"config",   required_argument, 0, 'c'},
 		{"geometry", required_argument, 0, 'g'},
 		{0, 0, 0, 0}
 	};
 
 
-	while ((options = getopt_long(argc, argv, "c:g:", long_options,
+	while ((options = getopt_long(argc, argv, "c:g:v", long_options,
 					&option_index)) != -1)
 	{
 		switch(options){
@@ -457,6 +468,9 @@ int main(int argc, char **argv)
 			case 'g':
 				switch_geometry = optarg;
 				break;
+			case 'v':
+				print_version();
+				exit(0);
 		}
 	}
 
