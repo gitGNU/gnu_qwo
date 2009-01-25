@@ -151,6 +151,17 @@ typedef enum {
 
 static Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
+void usage(){
+	fprintf(stdout,
+		"Usage: qwo [options]\n\n"
+		"Options:\n"
+		"  -g, --geometry {+-}<xoffset>{+-}<yoffset>	specify window placement\n"
+		"  -c, --config <file>	use configuration file <file> instead of ~/.qworc\n"
+		"  -h, --help      	Print this help\n"
+		"  -v, --version   	Print version information\n"
+		);
+}
+
 void print_version(){
 	fprintf(stdout, PACKAGE " " VERSION " ");
 	fprintf(stdout, copyright_notice);
@@ -286,7 +297,7 @@ int read_config(char *config_path, char **geometry)
 	const config_setting_t *line;
 
 	if ((file = fopen(config_path, "r")) == NULL) {
-		fprintf(stderr, "%s : Can't open configuration file\n", config_path);
+		fprintf(stderr, "Can't open configuration file %s\n", config_path);
 		return 0;
 	}
 	config_init(&configuration);
@@ -451,14 +462,15 @@ int main(int argc, char **argv)
 	int options;
 	int option_index = 0;
 	static struct option long_options[] = {
-		{"version",  no_argument, 0, 'v'},
+		{"help",     no_argument      , 0, 'h'},
+		{"version",  no_argument      , 0, 'v'},
 		{"config",   required_argument, 0, 'c'},
 		{"geometry", required_argument, 0, 'g'},
 		{0, 0, 0, 0}
 	};
 
 
-	while ((options = getopt_long(argc, argv, "c:g:v", long_options,
+	while ((options = getopt_long(argc, argv, "c:g:hv", long_options,
 					&option_index)) != -1)
 	{
 		switch(options){
@@ -470,6 +482,9 @@ int main(int argc, char **argv)
 				break;
 			case 'v':
 				print_version();
+				exit(0);
+			default:
+				usage();
 				exit(0);
 		}
 	}
