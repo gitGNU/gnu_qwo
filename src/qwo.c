@@ -103,9 +103,9 @@ KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
 	{XK_Down, XK_exclam, XK_KP_2, XK_minus, XK_greater, 0xffff, 0xffff, 0xffff, XK_less},
 	{0xffff, XK_equal, XK_dollar, XK_KP_3, XK_backslash, XK_parenright, 0xffff, 0xffff, 0xffff},
 	{XK_Home, 0xffff, 0xffff, XK_plus, XK_KP_6, XK_Return, XK_Alt_L, 0xffff, 0xffff},
-	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_bracketright,XK_braceright, 0xffff},
+	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_bracketright, XK_braceright, 0xffff},
 	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_KP_8, XK_at, 0xffff},
-	{0xffff, XK_ampersand, 0xffff, 0xffff, 0xffff, XK_braceleft, XK_bracketleft, XK_KP_7, XK_numbersign},
+	{0xffff, XK_ampersand, 0xffff, 0xffff, 0xffff, XK_Insert, XK_bracketleft, XK_KP_7, XK_numbersign},
 	{XK_End, XK_Escape, 0xffff, 0xffff, 0xffff, 0xffff, XK_Control_L, XK_Select, XK_KP_4}};
 
 static KeyCode Shift_code, Control_code, Alt_code;
@@ -594,6 +594,12 @@ int main(int argc, char **argv)
 					alt_key = 1;
 				} else if (ksym == XK_Control_L) {
 					ctrl_modifier = 1;
+				} else if (ksym == XK_Insert) {
+					code = XKeysymToKeycode(dpy, ksym);
+					XTestFakeKeyEvent(dpy, Shift_code, True, 0);
+					XTestFakeKeyEvent(dpy, code, True, 0);
+					XTestFakeKeyEvent(dpy, code, False, 0);
+					XTestFakeKeyEvent(dpy, Shift_code, False, 0);
 				} else if (ksym == XK_Select) {
 					help_screen = !help_screen;
 					update_display(dpy, toplevel, gc, shift_modifier, help_screen);
