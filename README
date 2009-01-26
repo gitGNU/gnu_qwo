@@ -43,10 +43,9 @@ The left < and right > of the center area are, respectively, the delete and
 space.
 
 Other characters can be obtained without beginning and ending in the center, the
-current keymap for these can be displayed on the screen using the shift modifier
-and extending the gesture past the capslock one. You enter the region on the top
-left from the center, go to the bottom left, bottom right and back to the
-center.
+current keymap for these can be displayed on the screen by going in the middle
+left region, then the one below and release. The same gesture will take you back
+to the normal screen.
 
 It is possible to customize the layout by adding a configuration file in your
 home directory named .qworc or with the command line switch -c <file_name>.  You
