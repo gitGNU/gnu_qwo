@@ -70,7 +70,6 @@
 #define MAX_GESTURES_BUFFER      6
 
 #define LONG_EXPOSURE_DELAY		2000L
-#define PRESS_DELAY				100L
 
 #define FILL_REGION4(a, b, c, d)        {a, b, c, d, a, a, a, a, a}
 #define FILL_REGION5(a, b, c, d, e)     {a, b, c, d, e, a, a, a, a}
@@ -197,17 +196,17 @@ void init_regions(Display *dpy, Window toplevel)
 	};
 
 	for (number = 0; number < MAX_REGIONS; number++){
-		region = XPolygonRegion(regions[number],
-				ARRAY_SIZE(regions[number]), EvenOddRule);
-		region_window = XCreateWindow(dpy, toplevel, 0, 0,
-				WIDTH, HEIGHT, 0, CopyFromParent,
-				InputOnly, CopyFromParent, 0, NULL);
+		region = XPolygonRegion(regions[number], ARRAY_SIZE(regions[number]),
+				EvenOddRule);
+		region_window = XCreateWindow(dpy, toplevel, 0, 0, WIDTH, HEIGHT, 0,
+				CopyFromParent, InputOnly, CopyFromParent, 0, NULL);
 		sprintf(window_name, "%i", number);
 		XStoreName(dpy, region_window, window_name);
-		XShapeCombineRegion(dpy, region_window, ShapeBounding, 0, 0,
-				region, ShapeSet);
+		XShapeCombineRegion(dpy, region_window, ShapeBounding, 0, 0, region,
+				ShapeSet);
 		XSetWMHints(dpy, region_window, wm_hints);
-		XSelectInput(dpy, region_window, EnterWindowMask | LeaveWindowMask | ButtonPressMask | ButtonReleaseMask);
+		XSelectInput(dpy, region_window, EnterWindowMask | LeaveWindowMask |
+				ButtonPressMask | ButtonReleaseMask);
 		XMapWindow(dpy, region_window);
 	}
 	XFree(wm_hints);
@@ -458,6 +457,7 @@ int main(int argc, char **argv)
 	int alt_key = 0;
 	int help_screen = 0;
 	int i, status = 0;
+	int sent = 0;
 	Time last_cross_timestamp = 0L;
 	Time last_pressed = 0L;
 	int options;
@@ -583,12 +583,13 @@ int main(int argc, char **argv)
 				XUngrabPointer(dpy, CurrentTime);
 				buffer[0] = region;
 				last_pressed = e.xbutton.time;
+				sent = 0;
 				break;
 			case ButtonRelease:
 				XFetchName(dpy, e.xbutton.window, &region_name);
 				region = region_name[0] - 48;
 				XFree(region_name);
-				if (buffer[0] == 0 && !region && e.xbutton.time - last_pressed > PRESS_DELAY)
+				if (buffer[0] == 0 && !region && sent)
 					break;
 				ksym = char_free[buffer[0]][region];
 				if (ksym == XK_Alt_L) {
@@ -722,6 +723,7 @@ int main(int argc, char **argv)
 						}
 					}
 
+					sent = 1;
 					buffer_count = 1;
 					buffer[0] = 0;
 					break;
