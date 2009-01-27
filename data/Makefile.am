@@ -14,7 +14,6 @@ man_MANS = qwo.1
 endif
 
 dist_man_MANS = $(man_MANS)
-CLEANFILES = $(man_MANS)
 
 qwo.1:
 	help2man -n "An input method for touchscreen" -s 1 -N -o qwo.1\
