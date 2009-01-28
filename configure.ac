@@ -1,7 +1,6 @@
 AC_PREREQ(2.53)
 AC_INIT(qwo, 0.3, http://www.nongnu.org/qwo/)
 AM_INIT_AUTOMAKE()
-AC_CONFIG_SRCDIR(src/qwo.c)
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
 

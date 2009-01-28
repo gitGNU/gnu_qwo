@@ -10,8 +10,7 @@ AM_CFLAGS = -Wall -pedantic -std=c99
 bin_PROGRAMS = qwo
 
 # add the sources to compile for your application
-qwo_SOURCES = \
-  qwo.c
+qwo_SOURCES = main.c window.c
 
 MAINTAINERCLEANFILES  = config.h.in Makefile.in
 
