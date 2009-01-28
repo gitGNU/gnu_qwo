@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008, 2009 Charles Clement caratorn _at_ gmail.com
+ *  Copyright (C) 2008, 2009 Charles Clement <caratorn _at_ gmail.com>
  *
  *  This file is part of qwo.
  *
