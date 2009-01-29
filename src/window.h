@@ -35,13 +35,18 @@
 
 #include <Imlib2.h>
 
-#define WIDTH   300
-#define HEIGHT  WIDTH
+#define DEFAULT_WIDTH   300
+#define DEFAULT_HEIGHT  DEFAULT_WIDTH
+
+#define MIN_WIDTH		180
+#define MIN_HEIGHT		MIN_WIDTH
+#define MAX_WIDTH		480
+#define MAX_HEIGHT		MAX_WIDTH
 
 #define MAX_REGIONS 9
 #define MAX_POINTS  9
 
-#define DELTA                   (WIDTH >> 4)
+#define DEFAULT_DELTA                   (DEFAULT_WIDTH >> 4)
 
 #define GRID_COLOR				"orange"
 
@@ -69,11 +74,8 @@ extern Pixmap char_pixmaps[3];
 
 extern Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
-void init_regions(Display *dpy, Window toplevel);
-void draw_grid(Display *dpy, Pixmap pixmap, GC gc);
-int load_charset(Display *dpy, GC gc, int num);
-int set_window_properties(Display *dpy, Window toplevel);
-int set_window_geometry(Display *dpy, Window win, char *geometry);
-void update_display(Display *dpy, Window toplevel, GC gc, int shift, int help);
+void update_display(Display *dpy, Window toplevel, int shift, int help);
+int init_window(Display *dpy, Window win, char *user_geometry);
+void close_window(Display *dpy, Window win);
 
 #endif /* WINDOW_H */

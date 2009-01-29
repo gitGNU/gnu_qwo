@@ -86,7 +86,8 @@ void usage(){
 	fprintf(stdout,
 		"Usage: qwo [options]\n\n"
 		"Options:\n"
-		"  -g, --geometry {+-}<xoffset>{+-}<yoffset>	specify window placement\n"
+		"  -g, --geometry [size][{+-}<xoffset>[{+-}<yoffset>]]\n"
+		"			specify window size and/or position\n"
 		"  -c, --config <file>	use configuration file <file> instead of ~/.qworc\n"
 		"  -h, --help      	Print this help\n"
 		"  -v, --version   	Print version information\n"
@@ -172,14 +173,12 @@ int main(int argc, char **argv)
 	char *display_name;
 	Window toplevel;
 
-	unsigned long valuemask;
-	XGCValues xgc;
-	GC gc;
-
 	int event_base, error_base;
 	int shape_ext_major, shape_ext_minor;
 
 	char *config_path = NULL;
+
+	char *user_geometry = NULL;
 	char *config_geometry = NULL;
 	char *switch_geometry = NULL;
 
@@ -192,7 +191,6 @@ int main(int argc, char **argv)
 	int ctrl_modifier = 0;
 	int alt_key = 0;
 	int help_screen = 0;
-	int i, status = 0;
 	int sent = 0;
 	Time last_cross_timestamp = 0L;
 	Time last_pressed = 0L;
@@ -262,45 +260,28 @@ int main(int argc, char **argv)
 
 	XShapeQueryVersion(dpy, &shape_ext_major, &shape_ext_minor);
 
-	xgc.foreground = BlackPixel(dpy, DefaultScreen(dpy));
-	xgc.background = WhitePixel(dpy, DefaultScreen(dpy));
-	xgc.line_width = 2;
-	valuemask = GCForeground | GCBackground | GCLineWidth;
-
-	gc = XCreateGC(dpy, DefaultRootWindow(dpy), valuemask, &xgc);
-
-	toplevel = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0,
-			WIDTH, HEIGHT, 0, CopyFromParent, CopyFromParent,
-			CopyFromParent, 0, NULL);
-
-	init_regions(dpy, toplevel);
-
-	set_window_properties(dpy, toplevel);
-
-	init_keycodes(dpy);
-
-	XSelectInput(dpy, toplevel, SubstructureNotifyMask | StructureNotifyMask | ExposureMask);
-
-	XMapWindow(dpy, toplevel);
+	toplevel = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0, DEFAULT_WIDTH,
+			DEFAULT_HEIGHT, 0, CopyFromParent, CopyFromParent, CopyFromParent,
+			0, NULL);
 
 	if (switch_geometry){
-		set_window_geometry(dpy, toplevel, switch_geometry);
+		user_geometry = switch_geometry;
 	} else {
-		set_window_geometry(dpy, toplevel, config_geometry);
+		user_geometry = config_geometry;
 	}
+
+	if (init_window(dpy, toplevel, user_geometry)){
+		fprintf(stderr, "Can't initialise window\n");
+		exit(3);
+	}
+
 	if (config_geometry) {
 		free(config_geometry);
 	}
 
-	for( i = 0; i < MAX_IMAGES; i++) {
-		char_pixmaps[i] = XCreatePixmap(dpy, toplevel, WIDTH, HEIGHT,
-				DefaultDepth(dpy, DefaultScreen(dpy)));
-		status |= load_charset(dpy, gc, i);
-	}
-	if (status)
-		run = 0;
+	init_keycodes(dpy);
 
-	update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+	update_display(dpy, toplevel, shift_modifier, help_screen);
 
 	while(run) {
 		XEvent e;
@@ -340,7 +321,7 @@ int main(int argc, char **argv)
 					XTestFakeKeyEvent(dpy, Shift_code, False, 0);
 				} else if (ksym == XK_Select) {
 					help_screen = !help_screen;
-					update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+					update_display(dpy, toplevel, shift_modifier, help_screen);
 				} else {
 					code = XKeysymToKeycode(dpy, ksym);
 
@@ -425,7 +406,7 @@ int main(int argc, char **argv)
 
 						if (buffer_count != 2) {
 							XClearWindow(dpy, toplevel);
-							update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+							update_display(dpy, toplevel, shift_modifier, help_screen);
 							buffer_count = 1;
 							buffer[0] = 0;
 							break;
@@ -455,7 +436,7 @@ int main(int argc, char **argv)
 						if (shift_modifier == 1) {
 							shift_modifier = 0;
 							XClearWindow(dpy, toplevel);
-							update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+							update_display(dpy, toplevel, shift_modifier, help_screen);
 						}
 					}
 
@@ -476,13 +457,13 @@ int main(int argc, char **argv)
 			case Expose:
 			case ConfigureNotify:
 				XMapWindow(dpy, toplevel);
-				update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+				update_display(dpy, toplevel, shift_modifier, help_screen);
 			case ClientMessage:
 				if ((e.xclient.message_type == mb_im_invoker_command) ||
 					(e.xclient.message_type == mtp_im_invoker_command)) {
 					if (e.xclient.data.l[0] == KeyboardShow) {
 						XMapWindow(dpy, toplevel);
-						update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+						update_display(dpy, toplevel, shift_modifier, help_screen);
 					}
 					if (e.xclient.data.l[0] == KeyboardHide) {
 						XUnmapWindow(dpy, toplevel);
@@ -495,7 +476,7 @@ int main(int argc, char **argv)
 							visible = 0;
 						} else {
 							XMapWindow(dpy, toplevel);
-							update_display(dpy, toplevel, gc, shift_modifier, help_screen);
+							update_display(dpy, toplevel, shift_modifier, help_screen);
 							visible = 1;
 						}
 					}
@@ -507,11 +488,7 @@ int main(int argc, char **argv)
 			}
 	}
 
-	XFreeGC(dpy, gc);
-	XFreePixmap(dpy, char_pixmaps[0]);
-	XFreePixmap(dpy, char_pixmaps[1]);
-	XDestroyWindow(dpy, toplevel);
-	XCloseDisplay(dpy);
+	close_window(dpy, toplevel);
 
 	exit(0);
 }

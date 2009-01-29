@@ -28,33 +28,47 @@ const char image_names[][MAX_IMAGE_NAME] = { "normal", "caps", "extra" };
 
 Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
-const XPoint point1 = { WIDTH / 3, 0 };
-const XPoint point2 = { 2*(WIDTH / 3), 0 };
-const XPoint point3 = { WIDTH, (HEIGHT / 3) };
-const XPoint point4 = { WIDTH, 2*(HEIGHT / 3) };
-const XPoint point5 = { 2*(WIDTH / 3), HEIGHT };
-const XPoint point6 = { (WIDTH / 3), HEIGHT };
-const XPoint point7 = { 0, 2*(HEIGHT/ 3) };
-const XPoint point8 = { 0, (HEIGHT / 3) };
-const XPoint point9 = { (WIDTH / 3) + DELTA, (HEIGHT / 3) - DELTA };
-const XPoint point10 = { 2*(WIDTH / 3) - DELTA, (HEIGHT / 3) - DELTA };
-const XPoint point11 =  { 2*(WIDTH / 3) + DELTA, (HEIGHT / 3) + DELTA };
-const XPoint point12 = { 2*(WIDTH / 3) + DELTA, 2*(HEIGHT / 3) - DELTA };
-const XPoint point13 = { 2*(WIDTH / 3) - DELTA, 2*(HEIGHT / 3) + DELTA };
-const XPoint point14 = { (WIDTH / 3) + DELTA, 2*(HEIGHT / 3) + DELTA };
-const XPoint point15 = { (WIDTH / 3) - DELTA, 2*(HEIGHT / 3) - DELTA };
-const XPoint point16 = { (WIDTH / 3) - DELTA, (HEIGHT / 3) + DELTA };
+GC gc;
 
-/*
- * Cardinal points
- */
+static unsigned int width, height;
 
-const XPoint point_ne = { 0, 0};
-const XPoint point_nw = { WIDTH, 0};
-const XPoint point_sw = { WIDTH, HEIGHT};
-const XPoint point_se = { 0, HEIGHT};
+void init_coordinates(XPoint point[], int width, int height, int delta){
 
-void init_regions(Display *dpy, Window toplevel)
+	/*
+	 * 0-7 are outer points
+	 * 8-15 are inner points
+	 * 16, 17, 18, 19 are north east, nort west, south west, south east
+	 */
+
+	point[16].x = point[16].y = point[17].y = point[19].x = 0;
+	point[17].x = point[18].x = width;
+	point[18].y = point[19].y = height;
+
+	point[0].y = point[1].y = point[6].x = point[7].x = 0;
+
+	point[0].x = point[5].x = width / 3;
+	point[1].x = point[4].x = 2*(width / 3);
+	point[2].x = point[3].x = width;
+
+	point[2].y = point[7].y = height / 3;
+	point[3].y = point[6].y = 2*(height / 3);
+	point[4].y = point[5].y = height;
+
+	point[8].x = point[13].x = (width / 3) + delta;
+	point[10].y = point[15].y = (height / 3) + delta;
+
+	point[10].x = point[11].x = 2*(width / 3) + delta;
+	point[12].y = point[13].y = 2*(height / 3) + delta;
+
+	point[9].x = point[12].x = 2*(width / 3) - delta;
+	point[11].y = point[14].y = 2*(height / 3) - delta;
+
+	point[14].x = point[15].x = (width / 3) - delta;
+	point[8].y = point[9].y = (height / 3) - delta;
+
+}
+
+void init_regions(Display *dpy, Window toplevel, XPoint point[])
 {
 	Window region_window;
 	Region region;
@@ -70,22 +84,22 @@ void init_regions(Display *dpy, Window toplevel)
 	}
 
 	XPoint regions[MAX_REGIONS][MAX_POINTS] = {
-		FILL_REGION8(point9, point10, point11, point12, point13,
-				point14, point15, point16),
-		FILL_REGION5(point_ne, point1, point9, point16, point8),
-		FILL_REGION4(point1, point2, point10, point9),
-		FILL_REGION5(point2, point_nw, point3, point11, point10),
-		FILL_REGION4(point3, point4, point12, point11),
-		FILL_REGION5(point4, point_sw, point5, point13, point12),
-		FILL_REGION4(point5, point6, point14, point13),
-		FILL_REGION5(point6, point_se, point7, point15, point14),
-		FILL_REGION4(point7, point8, point16, point15)
+		FILL_REGION8(point[8], point[9], point[10], point[11], point[12],
+				point[13], point[14], point[15]),
+		FILL_REGION5(point[16], point[0], point[8], point[15], point[7]),
+		FILL_REGION4(point[0], point[1], point[9], point[8]),
+		FILL_REGION5(point[1], point[17], point[2], point[10], point[9]),
+		FILL_REGION4(point[2], point[3], point[11], point[10]),
+		FILL_REGION5(point[3], point[18], point[4], point[12], point[11]),
+		FILL_REGION4(point[4], point[5], point[13], point[12]),
+		FILL_REGION5(point[5], point[19], point[6], point[14], point[13]),
+		FILL_REGION4(point[6], point[7], point[15], point[14])
 	};
 
 	for (number = 0; number < MAX_REGIONS; number++){
 		region = XPolygonRegion(regions[number], ARRAY_SIZE(regions[number]),
 				EvenOddRule);
-		region_window = XCreateWindow(dpy, toplevel, 0, 0, WIDTH, HEIGHT, 0,
+		region_window = XCreateWindow(dpy, toplevel, 0, 0, width, height, 0,
 				CopyFromParent, InputOnly, CopyFromParent, 0, NULL);
 		sprintf(window_name, "%i", number);
 		XStoreName(dpy, region_window, window_name);
@@ -99,7 +113,7 @@ void init_regions(Display *dpy, Window toplevel)
 	XFree(wm_hints);
 }
 
-void draw_grid(Display *dpy, Pixmap pixmap, GC gc)
+void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 {
 	XColor grid_color, exact;
 	Colormap cmap;
@@ -111,23 +125,23 @@ void draw_grid(Display *dpy, Pixmap pixmap, GC gc)
 
 	XSetForeground(dpy, gc, grid_color.pixel);
 
-	XDrawLine(dpy, pixmap, gc, point1.x, point1.y, point9.x, point9.y);
-	XDrawLine(dpy, pixmap, gc, point2.x, point2.y, point10.x, point10.y);
+	XDrawLine(dpy, pixmap, gc, point[0].x, point[0].y, point[8].x, point[8].y);
+	XDrawLine(dpy, pixmap, gc, point[1].x, point[1].y, point[9].x, point[9].y);
 
-	XDrawLine(dpy, pixmap, gc, point3.x, point3.y, point11.x, point11.y);
-	XDrawLine(dpy, pixmap, gc, point4.x, point4.y, point12.x, point12.y);
+	XDrawLine(dpy, pixmap, gc, point[2].x, point[2].y, point[10].x, point[10].y);
+	XDrawLine(dpy, pixmap, gc, point[3].x, point[3].y, point[11].x, point[11].y);
 
-	XDrawLine(dpy, pixmap, gc, point5.x, point5.y, point13.x, point13.y);
-	XDrawLine(dpy, pixmap, gc, point6.x, point6.y, point14.x, point14.y);
+	XDrawLine(dpy, pixmap, gc, point[4].x, point[4].y, point[12].x, point[12].y);
+	XDrawLine(dpy, pixmap, gc, point[5].x, point[5].y, point[13].x, point[13].y);
 
-	XDrawLine(dpy, pixmap, gc, point7.x, point7.y, point15.x, point15.y);
-	XDrawLine(dpy, pixmap, gc, point8.x, point8.y, point16.x, point16.y);
+	XDrawLine(dpy, pixmap, gc, point[6].x, point[6].y, point[14].x, point[14].y);
+	XDrawLine(dpy, pixmap, gc, point[7].x, point[7].y, point[15].x, point[15].y);
 
 	XSetForeground(dpy, gc, blackColor);
 
 }
 
-int load_charset(Display *dpy, GC gc, int num){
+int load_charset(Display *dpy, int num, int width, int height){
 	Visual *vis;
 	Colormap cm;
 	int depth;
@@ -138,7 +152,7 @@ int load_charset(Display *dpy, GC gc, int num){
 	unsigned long whiteColor = WhitePixel(dpy, DefaultScreen(dpy));
 
 	XSetForeground(dpy, gc, whiteColor);
-	XFillRectangle(dpy, char_pixmaps[num], gc, 0, 0, WIDTH, HEIGHT);
+	XFillRectangle(dpy, char_pixmaps[num], gc, 0, 0, width, height);
 	XSetForeground(dpy, gc, blackColor);
 
 	vis = DefaultVisual(dpy, DefaultScreen(dpy));
@@ -163,9 +177,7 @@ int load_charset(Display *dpy, GC gc, int num){
 		return 1;
 	}
 	imlib_context_set_image(image);
-	imlib_render_image_on_drawable(0, 0);
-
-	draw_grid(dpy, char_pixmaps[num], gc);
+	imlib_render_image_on_drawable_at_size(0, 0, width, height);
 
 	imlib_free_image();
 
@@ -209,42 +221,101 @@ int set_window_properties(Display *dpy, Window toplevel){
 	return 0;
 }
 
-int set_window_geometry(Display *dpy, Window win, char *geometry){
-	int xpos, ypos, width, height, return_mask, gravity;
-	XSizeHints	size_hints;
-
-	size_hints.flags = PMinSize | PMaxSize;
-	size_hints.min_width = size_hints.max_width = WIDTH;
-	size_hints.min_height = size_hints.max_height = HEIGHT;
-
-	XSetWMNormalHints(dpy, win, &size_hints);
-
-	if (geometry){
-
-		return_mask = XWMGeometry(dpy, DefaultScreen(dpy), geometry,
-				NULL, 0, &size_hints, &xpos, &ypos, &width, &height, &gravity);
-
-		if (return_mask & (WidthValue | HeightValue)){
-			fprintf(stderr, "Can't resize windows\n");
-		}
-
-		if (return_mask & (XValue | YValue)){
-			XMoveWindow(dpy, win, xpos, ypos);
-		}
-	}
-
-	return 0;
-}
-
-void update_display(Display *dpy, Window toplevel, GC gc, int shift, int help){
+void update_display(Display *dpy, Window toplevel, int shift, int help){
 
 	XClearWindow(dpy, toplevel);
 	if (help) {
-		XCopyArea(dpy, char_pixmaps[MAX_IMAGES - 1], toplevel, gc, 0,0, WIDTH, HEIGHT, 0, 0);
+		XCopyArea(dpy, char_pixmaps[MAX_IMAGES - 1], toplevel, gc, 0,0, width, height, 0, 0);
 	} else if (shift) {
-		XCopyArea(dpy, char_pixmaps[1], toplevel, gc, 0,0, WIDTH, HEIGHT, 0, 0);
+		XCopyArea(dpy, char_pixmaps[1], toplevel, gc, 0,0, width, height, 0, 0);
 	} else {
-		XCopyArea(dpy, char_pixmaps[0], toplevel, gc, 0,0, WIDTH, HEIGHT, 0, 0);
+		XCopyArea(dpy, char_pixmaps[0], toplevel, gc, 0,0, width, height, 0, 0);
 	}
 	XSync(dpy, False);
+}
+
+int init_window(Display *dpy, Window win, char *geometry){
+	int i, status = 0;
+	unsigned long valuemask;
+	XGCValues xgc;
+	XPoint coordinates[20];
+	int xpos, ypos, return_mask, delta;
+	int dpy_width, dpy_height;
+	XSizeHints	size_hints;
+
+	size_hints.flags = PMinSize | PMaxSize ;
+
+	xgc.foreground = BlackPixel(dpy, DefaultScreen(dpy));
+	xgc.background = WhitePixel(dpy, DefaultScreen(dpy));
+	xgc.line_width = 2;
+	valuemask = GCForeground | GCBackground | GCLineWidth;
+
+	gc = XCreateGC(dpy, DefaultRootWindow(dpy), valuemask, &xgc);
+
+	return_mask = XParseGeometry(geometry, &xpos, &ypos, &width, &height);
+
+	if ((width < MIN_WIDTH) || (width > MAX_WIDTH)){
+		width = DEFAULT_WIDTH;
+	}
+
+	if ((height < MIN_HEIGHT) || (height > MAX_HEIGHT)){
+		height = DEFAULT_HEIGHT;
+	}
+
+	height = width;
+
+	size_hints.min_width = size_hints.max_width = width;
+	size_hints.min_height = size_hints.max_height = height;
+
+	XSetWMNormalHints(dpy, win, &size_hints);
+
+	XResizeWindow(dpy, win, width, height);
+
+	dpy_width = XDisplayWidth(dpy, DefaultScreen(dpy));
+	dpy_height = XDisplayHeight(dpy, DefaultScreen(dpy));
+
+	if (!(return_mask & XValue)){
+		xpos = 0;
+	} else if(return_mask & XNegative) {
+		xpos+= dpy_width - width;
+	}
+
+	if (!(return_mask & YValue)){
+		ypos = 0;
+	} else if (return_mask & YNegative) {
+		ypos+= dpy_height - height;
+	}
+
+	XMoveWindow(dpy, win, xpos, ypos);
+
+	delta = (width * DEFAULT_DELTA) / DEFAULT_WIDTH;
+	init_coordinates(coordinates, width, height, delta);
+
+	init_regions(dpy, win, coordinates);
+
+	set_window_properties(dpy, win);
+
+	XSelectInput(dpy, win, SubstructureNotifyMask | StructureNotifyMask | ExposureMask);
+
+	XMapWindow(dpy, win);
+
+	for( i = 0; i < MAX_IMAGES; i++) {
+		char_pixmaps[i] = XCreatePixmap(dpy, win, width, height,
+				DefaultDepth(dpy, DefaultScreen(dpy)));
+		status |= load_charset(dpy, i, width, height);
+		draw_grid(dpy, char_pixmaps[i], coordinates);
+	}
+
+	return status;
+}
+
+void close_window(Display *dpy, Window toplevel){
+
+	XFreeGC(dpy, gc);
+	XFreePixmap(dpy, char_pixmaps[0]);
+	XFreePixmap(dpy, char_pixmaps[1]);
+	XFreePixmap(dpy, char_pixmaps[2]);
+	XDestroyWindow(dpy, toplevel);
+	XCloseDisplay(dpy);
+
 }
