@@ -458,6 +458,7 @@ int main(int argc, char **argv)
 			case ConfigureNotify:
 				XMapWindow(dpy, toplevel);
 				update_display(dpy, toplevel, shift_modifier, help_screen);
+				break;
 			case ClientMessage:
 				if ((e.xclient.message_type == mb_im_invoker_command) ||
 					(e.xclient.message_type == mtp_im_invoker_command)) {
