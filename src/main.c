@@ -39,7 +39,7 @@
 
 #define MAX_CHAR_PER_REGION		 5
 
-#define MAX_GESTURES_BUFFER      6
+#define MAX_GESTURES_BUFFER      10
 
 #define LONG_EXPOSURE_DELAY		2000L
 
@@ -74,13 +74,6 @@ KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
 static KeyCode Shift_code, Control_code, Alt_code;
 
 KeySym custom_charset[MAX_REGIONS - 1][MAX_CHAR_PER_REGION];
-
-typedef enum {
-	KeyboardNone = 0,
-	KeyboardShow,
-	KeyboardHide,
-	KeyboardToggle
-} KeyboardOperation;
 
 void usage(){
 	fprintf(stdout,
@@ -184,7 +177,7 @@ int main(int argc, char **argv)
 
 	int loaded_config = 0;
 	int run = 1;
-	int visible = 0;
+	int visible = 1;
 	int buffer[MAX_GESTURES_BUFFER];
 	int buffer_count = 0;
 	int shift_modifier = 0;
@@ -300,6 +293,7 @@ int main(int argc, char **argv)
 				XUngrabPointer(dpy, CurrentTime);
 				buffer[0] = region;
 				last_pressed = e.xbutton.time;
+				buffer_count = 1;
 				sent = 0;
 				break;
 			case ButtonRelease:
@@ -449,9 +443,41 @@ int main(int argc, char **argv)
 				if(buffer_count == 1) {
 					last_cross_timestamp = e.xcrossing.time;
 				}
+
 				if (!buffer_count || (buffer[buffer_count - 1] != region)) {
 					buffer[buffer_count] = region;
 					buffer_count++;
+				}
+
+				if(buffer_count == 9 && buffer[0] == buffer[buffer_count - 1]){
+					int diff;
+					XNextEvent(dpy, &e);
+
+					while(e.type != ButtonRelease){
+						XNextEvent(dpy, &e);
+					}
+
+					XFetchName(dpy, e.xcrossing.window, &region_name);
+					region = region_name[0] - 48;
+					diff = region - buffer[8];
+					if (!diff) {
+						sent = 1;
+						buffer_count = 0;
+						break;
+					}
+					if (!(DIRECTION(buffer[7], buffer[8]))){
+						if (diff > 0) {
+							diff = diff - MAX_REGIONS + 1;
+						}
+					} else {
+						if (diff < 0) {
+							diff = diff + MAX_REGIONS - 1;
+						}
+					}
+					toplevel = resize_window(dpy, toplevel, diff);
+					sent = 1;
+					buffer_count = 0;
+					update_display(dpy, toplevel, shift_modifier, help_screen);
 				}
 				break;
 			case Expose:
@@ -465,10 +491,12 @@ int main(int argc, char **argv)
 					if (e.xclient.data.l[0] == KeyboardShow) {
 						XMapWindow(dpy, toplevel);
 						update_display(dpy, toplevel, shift_modifier, help_screen);
+						visible = 1;
 					}
 					if (e.xclient.data.l[0] == KeyboardHide) {
 						XUnmapWindow(dpy, toplevel);
 						XSync(dpy, False);
+						visible = 0;
 					}
 					if (e.xclient.data.l[0] == KeyboardToggle) {
 						if (visible) {
@@ -483,8 +511,10 @@ int main(int argc, char **argv)
 					}
 					break;
 				}
-				if (e.xclient.data.l[0] == wmDeleteMessage)
+				if (e.xclient.data.l[0] == wmDeleteMessage) {
 					run = 0;
+					break;
+				}
 				break;
 			}
 	}

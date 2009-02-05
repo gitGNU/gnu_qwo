@@ -43,6 +43,8 @@
 #define MAX_WIDTH		480
 #define MAX_HEIGHT		MAX_WIDTH
 
+#define INCREMENT		60
+
 #define MAX_REGIONS 9
 #define MAX_POINTS  9
 
@@ -74,7 +76,16 @@ extern Pixmap char_pixmaps[3];
 
 extern Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
+typedef enum {
+	KeyboardNone = 0,
+	KeyboardShow,
+	KeyboardHide,
+	KeyboardToggle
+} KeyboardOperation;
+
+
 void update_display(Display *dpy, Window toplevel, int shift, int help);
+Window resize_window(Display *dpy, Window win, int number);
 int init_window(Display *dpy, Window win, char *user_geometry);
 void close_window(Display *dpy, Window win);
 

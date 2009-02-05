@@ -30,7 +30,7 @@ Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
 GC gc;
 
-static unsigned int width, height;
+static unsigned int window_size;
 
 void init_coordinates(XPoint point[], int width, int height, int delta){
 
@@ -68,7 +68,7 @@ void init_coordinates(XPoint point[], int width, int height, int delta){
 
 }
 
-void init_regions(Display *dpy, Window toplevel, XPoint point[])
+void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
 {
 	Window region_window;
 	Region region;
@@ -99,7 +99,7 @@ void init_regions(Display *dpy, Window toplevel, XPoint point[])
 	for (number = 0; number < MAX_REGIONS; number++){
 		region = XPolygonRegion(regions[number], ARRAY_SIZE(regions[number]),
 				EvenOddRule);
-		region_window = XCreateWindow(dpy, toplevel, 0, 0, width, height, 0,
+		region_window = XCreateWindow(dpy, toplevel, 0, 0, size, size, 0,
 				CopyFromParent, InputOnly, CopyFromParent, 0, NULL);
 		sprintf(window_name, "%i", number);
 		XStoreName(dpy, region_window, window_name);
@@ -187,7 +187,16 @@ int load_charset(Display *dpy, int num, int width, int height){
 int set_window_properties(Display *dpy, Window toplevel){
 	XWMHints *wm_hints;
 	Atom net_wm_state_skip_taskbar, net_wm_state_skip_pager, net_wm_state,
-		net_wm_window_type, net_wm_window_type_toolbar;
+		net_wm_window_type, net_wm_window_type_toolbar,
+		net_wm_allowed_actions, net_wm_action_resize;
+	Atom actions[1];
+	XSizeHints	size_hints;
+
+	size_hints.flags = PMinSize | PMaxSize ;
+	size_hints.min_width = size_hints.min_height = MIN_WIDTH;
+	size_hints.max_width = size_hints.max_height = MAX_WIDTH;
+
+	XSetWMNormalHints(dpy, toplevel, &size_hints);
 
 	XStoreName(dpy, toplevel, "Keyboard");
 
@@ -211,12 +220,19 @@ int set_window_properties(Display *dpy, Window toplevel){
 	net_wm_window_type = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE" , False);
 	net_wm_window_type_toolbar = XInternAtom(dpy, "_NET_WM_WINDOW_TYPE_TOOLBAR", False);
 
+	net_wm_allowed_actions = XInternAtom(dpy, "_NET_WM_ALLOWED_ACTIONS", False);
+	net_wm_action_resize = XInternAtom(dpy, "_NET_WM_ACTION_RESIZE", False);
+
+	actions[0] = net_wm_action_resize;
+
 	XChangeProperty (dpy, toplevel, net_wm_state, XA_ATOM, 32, PropModeAppend,
 			(unsigned char *)&net_wm_state_skip_taskbar, 1);
 	XChangeProperty (dpy, toplevel, net_wm_state, XA_ATOM, 32, PropModeAppend,
 			(unsigned char *)&net_wm_state_skip_pager, 1);
 	XChangeProperty(dpy, toplevel, net_wm_window_type, XA_ATOM, 32,
 			PropModeReplace, (unsigned char *) &net_wm_window_type_toolbar, 1);
+	XChangeProperty(dpy, toplevel, net_wm_allowed_actions, XA_ATOM, 32,
+			PropModeReplace, (unsigned char *) &actions, 1);
 
 	return 0;
 }
@@ -225,25 +241,71 @@ void update_display(Display *dpy, Window toplevel, int shift, int help){
 
 	XClearWindow(dpy, toplevel);
 	if (help) {
-		XCopyArea(dpy, char_pixmaps[MAX_IMAGES - 1], toplevel, gc, 0,0, width, height, 0, 0);
+		XCopyArea(dpy, char_pixmaps[MAX_IMAGES - 1], toplevel, gc, 0,0, window_size, window_size, 0, 0);
 	} else if (shift) {
-		XCopyArea(dpy, char_pixmaps[1], toplevel, gc, 0,0, width, height, 0, 0);
+		XCopyArea(dpy, char_pixmaps[1], toplevel, gc, 0,0, window_size, window_size, 0, 0);
 	} else {
-		XCopyArea(dpy, char_pixmaps[0], toplevel, gc, 0,0, width, height, 0, 0);
+		XCopyArea(dpy, char_pixmaps[0], toplevel, gc, 0,0, window_size, window_size, 0, 0);
 	}
 	XSync(dpy, False);
 }
 
+int create_window(Display *dpy, Window win, int size){
+	int delta, i;
+	int status = 0;
+	XPoint coordinates[20];
+
+	window_size = size;
+
+	XResizeWindow(dpy, win, window_size, window_size);
+
+	delta = (window_size * DEFAULT_DELTA) / DEFAULT_WIDTH;
+
+	init_coordinates(coordinates, window_size, window_size, delta);
+	init_regions(dpy, win, coordinates, window_size);
+
+	XSelectInput(dpy, win, SubstructureNotifyMask | StructureNotifyMask | ExposureMask);
+
+	for( i = 0; i < MAX_IMAGES; i++) {
+		char_pixmaps[i] = XCreatePixmap(dpy, win, window_size, window_size,
+				DefaultDepth(dpy, DefaultScreen(dpy)));
+		load_charset(dpy, i, window_size, window_size);
+		draw_grid(dpy, char_pixmaps[i], coordinates);
+	}
+
+	XMapWindow(dpy, win);
+
+	return status;
+}
+
+Window resize_window(Display *dpy, Window win, int number){
+	int size;
+
+	size = window_size + (number * INCREMENT);
+
+	if ((size < MIN_WIDTH) || (size > MAX_WIDTH)){
+		return win;
+	}
+
+	XUnmapWindow(dpy, win);
+
+	XDestroySubwindows(dpy, win);
+
+	XFreePixmap(dpy, char_pixmaps[0]);
+	XFreePixmap(dpy, char_pixmaps[1]);
+	XFreePixmap(dpy, char_pixmaps[2]);
+
+	create_window(dpy, win, size);
+
+	return win;
+}
+
 int init_window(Display *dpy, Window win, char *geometry){
-	int i, status = 0;
 	unsigned long valuemask;
 	XGCValues xgc;
-	XPoint coordinates[20];
-	int xpos, ypos, return_mask, delta;
+	unsigned int width, height;
+	int xpos, ypos, return_mask, status;
 	int dpy_width, dpy_height;
-	XSizeHints	size_hints;
-
-	size_hints.flags = PMinSize | PMaxSize ;
 
 	xgc.foreground = BlackPixel(dpy, DefaultScreen(dpy));
 	xgc.background = WhitePixel(dpy, DefaultScreen(dpy));
@@ -251,6 +313,8 @@ int init_window(Display *dpy, Window win, char *geometry){
 	valuemask = GCForeground | GCBackground | GCLineWidth;
 
 	gc = XCreateGC(dpy, DefaultRootWindow(dpy), valuemask, &xgc);
+
+	set_window_properties(dpy, win);
 
 	return_mask = XParseGeometry(geometry, &xpos, &ypos, &width, &height);
 
@@ -261,15 +325,6 @@ int init_window(Display *dpy, Window win, char *geometry){
 	if ((height < MIN_HEIGHT) || (height > MAX_HEIGHT)){
 		height = DEFAULT_HEIGHT;
 	}
-
-	height = width;
-
-	size_hints.min_width = size_hints.max_width = width;
-	size_hints.min_height = size_hints.max_height = height;
-
-	XSetWMNormalHints(dpy, win, &size_hints);
-
-	XResizeWindow(dpy, win, width, height);
 
 	dpy_width = XDisplayWidth(dpy, DefaultScreen(dpy));
 	dpy_height = XDisplayHeight(dpy, DefaultScreen(dpy));
@@ -288,23 +343,9 @@ int init_window(Display *dpy, Window win, char *geometry){
 
 	XMoveWindow(dpy, win, xpos, ypos);
 
-	delta = (width * DEFAULT_DELTA) / DEFAULT_WIDTH;
-	init_coordinates(coordinates, width, height, delta);
+	window_size = width;
 
-	init_regions(dpy, win, coordinates);
-
-	set_window_properties(dpy, win);
-
-	XSelectInput(dpy, win, SubstructureNotifyMask | StructureNotifyMask | ExposureMask);
-
-	XMapWindow(dpy, win);
-
-	for( i = 0; i < MAX_IMAGES; i++) {
-		char_pixmaps[i] = XCreatePixmap(dpy, win, width, height,
-				DefaultDepth(dpy, DefaultScreen(dpy)));
-		status |= load_charset(dpy, i, width, height);
-		draw_grid(dpy, char_pixmaps[i], coordinates);
-	}
+	status = create_window(dpy, win, width);
 
 	return status;
 }
@@ -319,3 +360,5 @@ void close_window(Display *dpy, Window toplevel){
 	XCloseDisplay(dpy);
 
 }
+
+
