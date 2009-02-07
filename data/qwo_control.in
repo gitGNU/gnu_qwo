@@ -5,7 +5,7 @@ Priority: optional
 Maintainer: Charles Clement <caratorn@gmail.com>
 Architecture: armv4t
 Homepage: http://www.nongnu.org/qwo
-Source: http://download.savannah.nongnu.org/releases/qwo/qwo-0.3.tar.gz
+Source: http://download.savannah.nongnu.org/releases/qwo/@PACKAGE_NAME@-@PACKAGE_VERSION@.tar.gz
 Depends: imlib2 libconfig
 Description: Qwo is an input method.
  Qwo is an efficient way to input text for touchscreens without picking

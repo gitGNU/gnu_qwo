@@ -1,3 +1,22 @@
+2009-02-07	Charles Clément <caratorn@gmail.com>
+
+	* 0.4 release
+	* The window size can be changed
+	* The window can be resized dynamically
+	* Added Paste
+	* Man page generation using help2man (Thanks Yaroslav Halchenko)
+	* Added Version and help messages
+	* Generates the .desktop and qwo_control files using autoconf
+	* Support to display the window at a specific position (Thanks Christian M. Amsüss)
+
+	* Added Alt key, Page up, down, home and end plus others
+	* Invert position for characters f and g
+	* The gesture to print help image is now middle left region to bottom left one
+	* Fix bug number 5
+	* Fix input focus in metacity/matchbox (Thanks Christian M. Amsüss and Erik
+	Andresen)
+
+
 2008-10-12	Charles Clément <caratorn@gmail.com>
 
 	* 0.3 release

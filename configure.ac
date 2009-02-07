@@ -1,5 +1,5 @@
 AC_PREREQ(2.53)
-AC_INIT(qwo, 0.3, http://www.nongnu.org/qwo/)
+AC_INIT(qwo, 0.4, http://www.nongnu.org/qwo/)
 AM_INIT_AUTOMAKE()
 AM_CONFIG_HEADER(config.h)
 AM_MAINTAINER_MODE
