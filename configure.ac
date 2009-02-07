@@ -45,6 +45,7 @@ Makefile
 src/Makefile
 data/Makefile
 data/qwo.desktop
+data/qwo_control
 ])
 
 AC_OUTPUT

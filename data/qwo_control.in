@@ -1,5 +1,5 @@
-Package: qwo
-Version: 0.3
+Package: @PACKAGE_NAME@
+Version: @PACKAGE_VERSION@
 Section: openmoko/applications
 Priority: optional
 Maintainer: Charles Clement <caratorn@gmail.com>
@@ -8,5 +8,5 @@ Homepage: http://www.nongnu.org/qwo
 Source: http://download.savannah.nongnu.org/releases/qwo/qwo-0.3.tar.gz
 Depends: imlib2 libconfig
 Description: Qwo is an input method.
- Qwo is an efficient way to input text for handheld devices without picking
+ Qwo is an efficient way to input text for touchscreens without picking
  your finger off the screen.
