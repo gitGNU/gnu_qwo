@@ -25,8 +25,6 @@
 #include <stdlib.h>
 #include <getopt.h>
 #include <ctype.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
 
 #include <X11/keysym.h>
 #include <locale.h>
