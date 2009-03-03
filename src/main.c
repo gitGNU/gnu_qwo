@@ -401,6 +401,7 @@ int main(int argc, char **argv)
 							update_display(dpy, toplevel, shift_modifier, help_screen);
 							buffer_count = 1;
 							buffer[0] = 0;
+							sent = 1;
 							break;
 						}
 					} else if (code) {
