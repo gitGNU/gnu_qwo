@@ -1,5 +1,4 @@
 [Desktop Entry]
-Encoding=UTF-8
 Name=@PACKAGE_NAME@
 Comment=An input method for touchscreens
 Version=@PACKAGE_VERSION@
