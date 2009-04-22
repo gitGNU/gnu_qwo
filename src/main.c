@@ -96,7 +96,7 @@ int read_config(char *config_path, char **geometry)
 	int j, i = 0;
 	config_t configuration;
 	FILE * file;
-	const char *keysym_name, *string;
+	const char *keysym_name, *string = NULL;
 	KeySym key;
 	const config_setting_t *keymap;
 	const config_setting_t *line;
@@ -138,7 +138,11 @@ int read_config(char *config_path, char **geometry)
 		}
 	}
 
+#if LIBCONFIG_LOOKUP_RETURN_CODE
+	config_lookup_string(&configuration, "geometry", &string);
+#else
 	string = config_lookup_string(&configuration, "geometry");
+#endif
 
 	if (string) {
 		*geometry = (char *) malloc(sizeof(char) * strlen(string));
