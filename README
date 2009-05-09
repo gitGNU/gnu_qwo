@@ -69,3 +69,7 @@ These characters also need to be mapped on the keyboard.
 
 The definitions for the letters are the ones defined in /usr/include/X11/keysymdef.h
 without the "XK_" prefix.
+
+Finally it is possible to change the color of the letters (foreground), the
+background and the lines (delimiter-color). Colors can be specified as X11 color
+names or as a RGB triplet in hexadecimal format prefixed with the string "0x".

@@ -50,7 +50,7 @@
 
 #define DEFAULT_DELTA                   (DEFAULT_WIDTH >> 4)
 
-#define GRID_COLOR				"orange"
+#define DEFAULT_GRID_COLOR				"orange"
 
 #define MAX_CONFIG_PATH 256
 
@@ -72,6 +72,13 @@
 #define DIRECTION(a, b)  \
 		(abs(b - a) == 1) ? ( (b - a) == 1) : (b - a) < 0
 
+#define FG_COLOR		0
+#define BG_COLOR		1
+#define GRID_COLOR		2
+
+extern XColor color_scheme[3];
+extern unsigned int defined_colors;
+
 extern Pixmap char_pixmaps[3];
 
 extern Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
@@ -88,5 +95,6 @@ void update_display(Display *dpy, Window toplevel, int shift, int help);
 Window resize_window(Display *dpy, Window win, int number);
 int init_window(Display *dpy, Window win, char *user_geometry);
 void close_window(Display *dpy, Window win);
+XColor convert_color(Display *dpy, const char *color);
 
 #endif /* WINDOW_H */

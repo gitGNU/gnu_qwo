@@ -22,6 +22,9 @@
 
 #include <window.h>
 
+XColor color_scheme[3];
+unsigned int defined_colors = 0;
+
 Pixmap char_pixmaps[3];
 
 const char image_names[][MAX_IMAGE_NAME] = { "normal", "caps", "extra" };
@@ -119,11 +122,14 @@ void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 	Colormap cmap;
 
 	unsigned long blackColor = BlackPixel(dpy, DefaultScreen(dpy));
-	cmap = DefaultColormap(dpy, DefaultScreen(dpy));
 
-	XAllocNamedColor(dpy, cmap, GRID_COLOR, &grid_color, &exact);
-
-	XSetForeground(dpy, gc, grid_color.pixel);
+	if (defined_colors & (1 << GRID_COLOR)) {
+		XSetForeground(dpy, gc, color_scheme[GRID_COLOR].pixel);
+	} else {
+		cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+		XAllocNamedColor(dpy, cmap, DEFAULT_GRID_COLOR, &grid_color, &exact);
+		XSetForeground(dpy, gc, grid_color.pixel);
+	}
 
 	XDrawLine(dpy, pixmap, gc, point[0].x, point[0].y, point[8].x, point[8].y);
 	XDrawLine(dpy, pixmap, gc, point[1].x, point[1].y, point[9].x, point[9].y);
@@ -148,12 +154,15 @@ int load_charset(Display *dpy, int num, int width, int height){
 	char image_path[MAX_IMAGE_PATH];
 	Imlib_Image image;
 
-	unsigned long blackColor = BlackPixel(dpy, DefaultScreen(dpy));
 	unsigned long whiteColor = WhitePixel(dpy, DefaultScreen(dpy));
 
-	XSetForeground(dpy, gc, whiteColor);
+	if (defined_colors & (1 << BG_COLOR)) {
+		XSetForeground(dpy, gc, color_scheme[BG_COLOR].pixel);
+	} else {
+		XSetForeground(dpy, gc, whiteColor);
+	}
+
 	XFillRectangle(dpy, char_pixmaps[num], gc, 0, 0, width, height);
-	XSetForeground(dpy, gc, blackColor);
 
 	vis = DefaultVisual(dpy, DefaultScreen(dpy));
 	depth = DefaultDepth(dpy, DefaultScreen(dpy));
@@ -176,11 +185,38 @@ int load_charset(Display *dpy, int num, int width, int height){
 		fprintf(stderr, "%s : Can't open file\n", image_path);
 		return 1;
 	}
+
 	imlib_context_set_image(image);
+
+	if (defined_colors & (1 << FG_COLOR)) {
+		Imlib_Color_Modifier modifier;
+		DATA8 rt[256], gt[256], bt[256], at[256];
+		unsigned char red, green, blue;
+		int j;
+
+		modifier = imlib_create_color_modifier();
+		imlib_context_set_color_modifier(modifier);
+		imlib_get_color_modifier_tables(rt, gt, bt, at);
+
+		red = color_scheme[FG_COLOR].red >> 8;
+		green = color_scheme[FG_COLOR].green >> 8;
+		blue = color_scheme[FG_COLOR].blue >> 8;
+
+		for (j = 0x100; --j >= 0;) {
+			rt[j] = red;
+			gt[j] = green;
+			bt[j] = blue;
+			at[j] = at[j];
+		}
+
+		imlib_set_color_modifier_tables(rt, gt, bt, at);
+		imlib_apply_color_modifier();
+
+	}
+
 	imlib_render_image_on_drawable_at_size(0, 0, width, height);
 
 	imlib_free_image();
-
 	return 0;
 }
 
@@ -361,4 +397,26 @@ void close_window(Display *dpy, Window toplevel){
 
 }
 
+XColor convert_color(Display *dpy, const char *color){
+	XColor color_def, exact;
+	Colormap cmap;
+	char color_spec[13] = "rgb:../../..\0";
+	int i, status;
 
+	cmap = DefaultColormap(dpy, DefaultScreen(dpy));
+
+	if (color[0] == '0' && color[1] == 'x' && (strlen(color) == 8)) {
+		for (i = 0 ; i < 2 ; i++) {
+			color_spec[4 + i] = color[2 + i];
+			color_spec[7 + i] = color[4 + i];
+			color_spec[10 + i] = color[6 + i];
+		}
+		status = XAllocNamedColor(dpy, cmap, color_spec, &color_def, &exact);
+	} else
+		status = XAllocNamedColor(dpy, cmap, color, &color_def, &exact);
+
+	if(!status) {
+		fprintf(stderr, "Can't find color : %s\n", color);
+	}
+	return color_def;
+}

@@ -1,5 +1,6 @@
 # Sample config file for qwo
 # You can define a custom keyboard layout here
+# Lines starting with # are ignored
 
 charset = (
 # Definitions for the first region, the first one is going to the previous
@@ -18,3 +19,8 @@ charset = (
 );
 
 # geometry = "+100+100";
+
+# foreground = "black";
+# background = "white";
+# delimiter-color = "orange";
+

@@ -80,6 +80,10 @@ void usage(){
 		"  -g, --geometry [size][{+-}<xoffset>[{+-}<yoffset>]]\n"
 		"			specify window size and/or position\n"
 		"  -c, --config <file>	use configuration file <file> instead of ~/.qworc\n"
+		"  -f, --foreground <color>	set the foreground color\n"
+		"  -b, --background <color>	set the background color\n"
+		"  -d, --delimiter-color <color> set the region delimiter color\n"
+		"        Where color is one of 0xrrggbb or a named color as red...\n"
 		"  -h, --help      	Print this help\n"
 		"  -v, --version   	Print version information\n"
 		);
@@ -91,12 +95,15 @@ void print_version(){
 }
 
 #ifdef HAVE_LIBCONFIG
-int read_config(char *config_path, char **geometry)
+int read_config(Display *dpy, char *config_path, char **geometry)
 {
 	int j, i = 0;
 	config_t configuration;
 	FILE * file;
 	const char *keysym_name, *string = NULL;
+	const char *fg_color = NULL;
+	const char *bg_color = NULL;
+	const char *delimiter_color = NULL;
 	KeySym key;
 	const config_setting_t *keymap;
 	const config_setting_t *line;
@@ -140,13 +147,34 @@ int read_config(char *config_path, char **geometry)
 
 #if LIBCONFIG_LOOKUP_RETURN_CODE
 	config_lookup_string(&configuration, "geometry", &string);
+	config_lookup_string(&configuration, "foreground", &fg_color);
+	config_lookup_string(&configuration, "background", &bg_color);
+	config_lookup_string(&configuration, "delimiter-color", &delimiter_color);
 #else
 	string = config_lookup_string(&configuration, "geometry");
+	fg_color = config_lookup_string(&configuration, "foreground");
+	bg_color = config_lookup_string(&configuration, "background");
+	delimiter_color = config_lookup_string(&configuration, "delimiter-color");
 #endif
 
 	if (string) {
 		*geometry = (char *) malloc(sizeof(char) * strlen(string));
 		strcpy(*geometry, string);
+	}
+
+	if(fg_color) {
+		color_scheme[FG_COLOR] = convert_color(dpy, fg_color);
+		defined_colors |= (1 << FG_COLOR);
+	}
+
+	if(bg_color) {
+		color_scheme[BG_COLOR] = convert_color(dpy, bg_color);
+		defined_colors |= (1 << BG_COLOR);
+	}
+
+	if(delimiter_color) {
+		color_scheme[GRID_COLOR] = convert_color(dpy, delimiter_color);
+		defined_colors |= (1 << GRID_COLOR);
 	}
 
 	config_destroy(&configuration);
@@ -192,15 +220,20 @@ int main(int argc, char **argv)
 	int options;
 	int option_index = 0;
 	static struct option long_options[] = {
-		{"help",     no_argument      , 0, 'h'},
-		{"version",  no_argument      , 0, 'v'},
-		{"config",   required_argument, 0, 'c'},
-		{"geometry", required_argument, 0, 'g'},
+		{"help",			no_argument      , 0, 'h'},
+		{"version",			no_argument      , 0, 'v'},
+		{"foreground",		required_argument, 0, 'f'},
+		{"background",		required_argument, 0, 'b'},
+		{"delimiter-color", required_argument, 0, 'l'},
+		{"config",			required_argument, 0, 'c'},
+		{"geometry",		required_argument, 0, 'g'},
 		{0, 0, 0, 0}
 	};
 
+	display_name = XDisplayName(NULL);
+	dpy = XOpenDisplay(display_name);
 
-	while ((options = getopt_long(argc, argv, "c:g:hv", long_options,
+	while ((options = getopt_long(argc, argv, "c:g:f:b:d:hv", long_options,
 					&option_index)) != -1)
 	{
 		switch(options){
@@ -210,6 +243,18 @@ int main(int argc, char **argv)
 			case 'g':
 				switch_geometry = optarg;
 				break;
+			case 'f':
+				color_scheme[FG_COLOR] = convert_color(dpy, optarg);
+				defined_colors |= (1 << FG_COLOR);
+				break;
+			case 'b':
+				color_scheme[BG_COLOR] = convert_color(dpy, optarg);
+				defined_colors |= (1 << BG_COLOR);
+				break;
+			case 'd':
+				color_scheme[GRID_COLOR] = convert_color(dpy, optarg);
+				defined_colors |= (1 << GRID_COLOR);
+				break;
 			case 'v':
 				print_version();
 				exit(0);
@@ -218,9 +263,6 @@ int main(int argc, char **argv)
 				exit(0);
 		}
 	}
-
-	display_name = XDisplayName(NULL);
-	dpy = XOpenDisplay(display_name);
 
 	if (!setlocale(LC_CTYPE, ""))
 	{
@@ -242,14 +284,14 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LIBCONFIG
 	if (config_path) {
-		loaded_config = read_config(config_path, &config_geometry);
+		loaded_config = read_config(dpy, config_path, &config_geometry);
 	} else {
 		char config_path[MAX_CONFIG_PATH];
 		char *home_dir = getenv("HOME");
 		strncpy(config_path, home_dir, MAX_CONFIG_PATH);
 		strncat(config_path + strlen(home_dir), CONFIG_FILE,
 				MAX_CONFIG_PATH - strlen(home_dir));
-		loaded_config = read_config(config_path, &config_geometry);
+		loaded_config = read_config(dpy, config_path, &config_geometry);
 	}
 #endif
 
