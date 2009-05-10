@@ -162,17 +162,17 @@ int read_config(Display *dpy, char *config_path, char **geometry)
 		strcpy(*geometry, string);
 	}
 
-	if(fg_color) {
+	if(fg_color && (!(defined_colors & (1 << FG_COLOR)))) {
 		color_scheme[FG_COLOR] = convert_color(dpy, fg_color);
 		defined_colors |= (1 << FG_COLOR);
 	}
 
-	if(bg_color) {
+	if(bg_color && (!(defined_colors & (1 << BG_COLOR)))) {
 		color_scheme[BG_COLOR] = convert_color(dpy, bg_color);
 		defined_colors |= (1 << BG_COLOR);
 	}
 
-	if(delimiter_color) {
+	if(delimiter_color && (!(defined_colors & (1 << GRID_COLOR)))) {
 		color_scheme[GRID_COLOR] = convert_color(dpy, delimiter_color);
 		defined_colors |= (1 << GRID_COLOR);
 	}
