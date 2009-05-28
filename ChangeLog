@@ -1,3 +1,17 @@
+2009-05-28	Charles Clément <caratorn@gmail.com>
+
+	* 0.5 release
+	* Add Support fot user defined colors for letters, background and grid
+	* Add redundant letters in unused spot instead of ? (Thanks to Richard Kralovic)
+	* Fix bug issuing a 5 when releasing a shift gesture in center region (Thanks to Richard Kralovic)
+
+	* Update libconfig support to latest 1.3.2 version
+
+	* Remove gnome-common dependency
+	* Remove imlib2-config call in configure.ac
+	* Remove deprecated Encoding key in desktop file
+	* Remove double header inclusion
+
 2009-02-07	Charles Clément <caratorn@gmail.com>
 
 	* 0.4 release
