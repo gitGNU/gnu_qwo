@@ -9,12 +9,4 @@ dist_pkgdata_DATA = qwo.desktop qworc normal.png caps.png extra.png
 desktopdir = $(datadir)/applications
 dist_desktop_DATA = qwo.desktop
 
-if HAVE_HELP2MAN
-man_MANS = qwo.1
-endif
-
-dist_man_MANS = $(man_MANS)
-
-qwo.1:
-	help2man -n "An input method for touchscreen" -s 1 -N -o qwo.1\
-		$(top_builddir)/src/qwo
+dist_man_MANS = qwo.1

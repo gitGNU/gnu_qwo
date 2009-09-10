@@ -40,17 +40,6 @@ LIBS="$LIBS $LIBCONFIG_LIBS"
 
 fi
 
-dnl Check for help2man
-
-AC_CHECK_PROGS([HELP2MAN], [help2man], [NONE])
-
-if test x"$HELP2MAN" = xNONE; then
-	AC_MSG_WARN(["cannot find help2man."])
-	AC_MSG_WARN(["You will not be able to generate the manpage."])
-fi
-AM_CONDITIONAL([HAVE_HELP2MAN], [test x"$HELP2MAN" != xNONE])
-AC_SUBST([HELP2MAN])
-
 AC_CONFIG_FILES([
 Makefile
 src/Makefile
