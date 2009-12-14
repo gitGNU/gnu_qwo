@@ -63,7 +63,8 @@ home directory named .qworc or with the command line switch -c <file_name>.  You
 first need to install libconfig (http://www.hyperrealm.com/libconfig/).  An
 example configuration file for a French layout is provided in data/qworc. You
 can access these characters by issuing a normal gesture and instead of going
-back to the center, go back to the first region entered.
+back to the center, go back to the first region entered before entering the
+center region.
 
 These characters also need to be mapped on the keyboard.
 
