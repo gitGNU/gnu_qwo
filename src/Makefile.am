@@ -12,5 +12,7 @@ bin_PROGRAMS = qwo
 # add the sources to compile for your application
 qwo_SOURCES = main.c window.c
 
+noinst_HEADERS = window.h
+
 MAINTAINERCLEANFILES  = config.h.in Makefile.in
 
