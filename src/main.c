@@ -58,15 +58,15 @@ char charset[][MAX_REGIONS] = {
 };
 
 KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
-	{XK_KP_5, 0xffff, XK_Up, 0xffff, XK_Right, XK_backslash, XK_KP_0, XK_slash, XK_Left},
-	{XK_grave, XK_KP_1, XK_Tab, XK_equal, 0xffff, XK_braceleft, XK_bracketleft, XK_parenleft, XK_bar},
-	{XK_Down, XK_asciicircum, XK_KP_2, XK_minus, XK_greater, 0xffff, 0xffff, 0xffff, XK_less},
-	{XK_apostrophe, XK_percent, XK_dollar, XK_KP_3, XK_Insert, XK_parenright, XK_bracketright, XK_braceright, 0xffff},
-	{0xffff, 0xffff, 0xffff, XK_exclam, XK_KP_6, XK_Return, XK_Alt_L, 0xffff, XK_Home},
-	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_KP_9, XK_asterisk, XK_ampersand, 0xffff},
-	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_KP_8, XK_at, 0xffff},
-	{0xffff, XK_numbersign, 0xffff, 0xffff, 0xffff, XK_plus, XK_asciitilde, XK_KP_7, XK_quotedbl},
-	{0xffff, XK_Escape, 0xffff, 0xffff, XK_End, 0xffff, XK_Control_L, XK_Select, XK_KP_4}
+	{XK_5, 0xffff, XK_Up, 0xffff, XK_Right, XK_backslash, XK_0, XK_slash, XK_Left},
+	{XK_grave, XK_1, XK_Tab, XK_equal, 0xffff, XK_braceleft, XK_bracketleft, XK_parenleft, XK_bar},
+	{XK_Down, XK_asciicircum, XK_2, XK_minus, XK_greater, 0xffff, 0xffff, 0xffff, XK_less},
+	{XK_apostrophe, XK_percent, XK_dollar, XK_3, XK_Insert, XK_parenright, XK_bracketright, XK_braceright, 0xffff},
+	{0xffff, 0xffff, 0xffff, XK_exclam, XK_6, XK_Return, XK_Alt_L, 0xffff, XK_Home},
+	{0xffff, 0xffff, 0xffff, XK_colon, XK_semicolon, XK_9, XK_asterisk, XK_ampersand, 0xffff},
+	{0xffff, 0xffff, 0xffff, 0xffff, 0xffff, XK_underscore, XK_8, XK_at, 0xffff},
+	{0xffff, XK_numbersign, 0xffff, 0xffff, 0xffff, XK_plus, XK_asciitilde, XK_7, XK_quotedbl},
+	{0xffff, XK_Escape, 0xffff, 0xffff, XK_End, 0xffff, XK_Control_L, XK_Select, XK_4}
 };
 
 static KeyCode Shift_code, Control_code, Alt_code;
