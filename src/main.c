@@ -330,238 +330,238 @@ int main(int argc, char **argv)
 
 		XNextEvent(dpy, &e);
 		switch (e.type) {
-			case ButtonPress:
-				XFetchName(dpy, e.xbutton.window, &region_name);
-				region = region_name[0] - 48;
-				XFree(region_name);
-				XUngrabPointer(dpy, CurrentTime);
-				buffer[0] = region;
-				last_pressed = e.xbutton.time;
-				buffer_count = 1;
-				sent = 0;
+		case ButtonPress:
+			XFetchName(dpy, e.xbutton.window, &region_name);
+			region = region_name[0] - 48;
+			XFree(region_name);
+			XUngrabPointer(dpy, CurrentTime);
+			buffer[0] = region;
+			last_pressed = e.xbutton.time;
+			buffer_count = 1;
+			sent = 0;
+			break;
+		case ButtonRelease:
+			XFetchName(dpy, e.xbutton.window, &region_name);
+			region = region_name[0] - 48;
+			XFree(region_name);
+			if (buffer[0] == 0 && !region && sent)
 				break;
-			case ButtonRelease:
-				XFetchName(dpy, e.xbutton.window, &region_name);
-				region = region_name[0] - 48;
-				XFree(region_name);
-				if (buffer[0] == 0 && !region && sent)
-					break;
-				ksym = char_free[buffer[0]][region];
-				if (ksym == XK_Alt_L) {
-					alt_key = 1;
-				} else if (ksym == XK_Control_L) {
-					ctrl_modifier = 1;
-				} else if (ksym == XK_Insert) {
-					code = XKeysymToKeycode(dpy, ksym);
-					XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-					XTestFakeKeyEvent(dpy, code, True, 0);
-					XTestFakeKeyEvent(dpy, code, False, 0);
-					XTestFakeKeyEvent(dpy, Shift_code, False, 0);
-				} else if (ksym == XK_Select) {
-					help_screen = !help_screen;
-					update_display(dpy, toplevel, shift_modifier, help_screen);
-				} else {
-					code = XKeysymToKeycode(dpy, ksym);
+			ksym = char_free[buffer[0]][region];
+			if (ksym == XK_Alt_L) {
+				alt_key = 1;
+			} else if (ksym == XK_Control_L) {
+				ctrl_modifier = 1;
+			} else if (ksym == XK_Insert) {
+				code = XKeysymToKeycode(dpy, ksym);
+				XTestFakeKeyEvent(dpy, Shift_code, True, 0);
+				XTestFakeKeyEvent(dpy, code, True, 0);
+				XTestFakeKeyEvent(dpy, code, False, 0);
+				XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+			} else if (ksym == XK_Select) {
+				help_screen = !help_screen;
+				update_display(dpy, toplevel, shift_modifier, help_screen);
+			} else {
+				code = XKeysymToKeycode(dpy, ksym);
 
-					for (state_mod = 0; state_mod < 4; state_mod++) {
-						if (XKeycodeToKeysym(dpy, code, state_mod) == ksym ) {
-							break;
-						}
+				for (state_mod = 0; state_mod < 4; state_mod++) {
+					if (XKeycodeToKeysym(dpy, code, state_mod) == ksym ) {
+						break;
 					}
-
-					if (state_mod)
-						XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-					XTestFakeKeyEvent(dpy, code, True, 0);
-					XTestFakeKeyEvent(dpy, code, False, 0);
-					if (state_mod)
-						XTestFakeKeyEvent(dpy, Shift_code, False, 0);
 				}
-				buffer_count = 0;
-				break;
-			case EnterNotify:
-				XFetchName(dpy, e.xcrossing.window, &region_name);
-				region = region_name[0] - 48;
-				XFree(region_name);
-				KeySym index;
 
-				char c = '\0';
+				if (state_mod)
+					XTestFakeKeyEvent(dpy, Shift_code, True, 0);
+				XTestFakeKeyEvent(dpy, code, True, 0);
+				XTestFakeKeyEvent(dpy, code, False, 0);
+				if (state_mod)
+					XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+			}
+			buffer_count = 0;
+			break;
+		case EnterNotify:
+			XFetchName(dpy, e.xcrossing.window, &region_name);
+			region = region_name[0] - 48;
+			XFree(region_name);
+			KeySym index;
 
-				if ((region == 0) && buffer_count > 1 && buffer[0] == 0){
+			char c = '\0';
 
-					if ((buffer[1] == buffer[buffer_count - 1]) && loaded_config && (buffer_count > 2)) {
-						buffer_count = (buffer_count - 1) >> 1;
+			if ((region == 0) && buffer_count > 1 && buffer[0] == 0){
 
-						if (DIRECTION(buffer[1], buffer[2]))
-							index = custom_charset[buffer[1] - 1][(buffer_count << 1) - 1];
-						else
-							index = custom_charset[buffer[1] - 1][(buffer_count << 1) - 2];
+				if ((buffer[1] == buffer[buffer_count - 1]) && loaded_config && (buffer_count > 2)) {
+					buffer_count = (buffer_count - 1) >> 1;
 
-						if (shift_modifier) {
-							KeySym lower, upper;
-							XConvertCase(index, &lower, &upper);
-							code = XKeysymToKeycode(dpy, upper);
-						} else {
-							code = XKeysymToKeycode(dpy, index);
-						}
+					if (DIRECTION(buffer[1], buffer[2]))
+						index = custom_charset[buffer[1] - 1][(buffer_count << 1) - 1];
+					else
+						index = custom_charset[buffer[1] - 1][(buffer_count << 1) - 2];
+
+					if (shift_modifier) {
+						KeySym lower, upper;
+						XConvertCase(index, &lower, &upper);
+						code = XKeysymToKeycode(dpy, upper);
 					} else {
-						c = charset[buffer[1] - 1][buffer[buffer_count - 1] - 1];
-							// X11 KeySym maps ASCII table
-						code = XKeysymToKeycode(dpy, c);
-						index = (KeySym) c;
+						code = XKeysymToKeycode(dpy, index);
 					}
-					for (state_mod = 0; state_mod < 4; state_mod++) {
-						if (XKeycodeToKeysym(dpy, code, state_mod) == index) {
-							break;
+				} else {
+					c = charset[buffer[1] - 1][buffer[buffer_count - 1] - 1];
+						// X11 KeySym maps ASCII table
+					code = XKeysymToKeycode(dpy, c);
+					index = (KeySym) c;
+				}
+				for (state_mod = 0; state_mod < 4; state_mod++) {
+					if (XKeycodeToKeysym(dpy, code, state_mod) == index) {
+						break;
+					}
+				}
+
+				if (c == '<') {
+					if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
+							// Erase all buffer
+					} else {
+						if (buffer_count == 2) {
+						code = XKeysymToKeycode(dpy, XK_BackSpace);
 						}
 					}
-
-					if (c == '<') {
+					XTestFakeKeyEvent(dpy, code, True, 0);
+					XTestFakeKeyEvent(dpy, code, False, 0);
+				} else if (c == '>') {
+					if (buffer_count == 2) {
 						if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
-								// Erase all buffer
+							code = XKeysymToKeycode(dpy, XK_Return);
 						} else {
-							if (buffer_count == 2) {
-							code = XKeysymToKeycode(dpy, XK_BackSpace);
-							}
+							code = XKeysymToKeycode(dpy, XK_space);
 						}
 						XTestFakeKeyEvent(dpy, code, True, 0);
 						XTestFakeKeyEvent(dpy, code, False, 0);
-					} else if (c == '>') {
-						if (buffer_count == 2) {
-							if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
-								code = XKeysymToKeycode(dpy, XK_Return);
-							} else {
-								code = XKeysymToKeycode(dpy, XK_space);
-							}
-							XTestFakeKeyEvent(dpy, code, True, 0);
-							XTestFakeKeyEvent(dpy, code, False, 0);
-						} else if (shift_modifier) {
-							shift_modifier = 0;
-						} else if (buffer_count == 4) {
-							shift_modifier = 1;
-						} else if (buffer_count == 5) {
-							shift_modifier = 2;
-						}
-
-						if (buffer_count != 2) {
-							XClearWindow(dpy, toplevel);
-							update_display(dpy, toplevel, shift_modifier, help_screen);
-							buffer_count = 1;
-							buffer[0] = 0;
-							sent = 1;
-							break;
-						}
-					} else if (code) {
-						if ((shift_modifier && isalpha(c)) || state_mod) {
-							XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-							XTestFakeKeyEvent(dpy, code, True, 0);
-							XTestFakeKeyEvent(dpy, code, False, 0);
-							XTestFakeKeyEvent(dpy, Shift_code, False, 0);
-						} else if (ctrl_modifier) {
-							XTestFakeKeyEvent(dpy, Control_code, True, 0);
-							XTestFakeKeyEvent(dpy, code, True, 0);
-							XTestFakeKeyEvent(dpy, code, False, 0);
-							XTestFakeKeyEvent(dpy, Control_code, False, 0);
-							ctrl_modifier = 0;
-						} else if (alt_key) {
-							XTestFakeKeyEvent(dpy, Alt_code, True, 0);
-							XTestFakeKeyEvent(dpy, code, True, 0);
-							XTestFakeKeyEvent(dpy, code, False, 0);
-							XTestFakeKeyEvent(dpy, Alt_code, False, 0);
-							alt_key = 0;
-						} else {
-							XTestFakeKeyEvent(dpy, code, True, 0);
-							XTestFakeKeyEvent(dpy, code, False, 0);
-						}
-						if (shift_modifier == 1) {
-							shift_modifier = 0;
-							XClearWindow(dpy, toplevel);
-							update_display(dpy, toplevel, shift_modifier, help_screen);
-						}
+					} else if (shift_modifier) {
+						shift_modifier = 0;
+					} else if (buffer_count == 4) {
+						shift_modifier = 1;
+					} else if (buffer_count == 5) {
+						shift_modifier = 2;
 					}
 
-					sent = 1;
-					buffer_count = 1;
-					buffer[0] = 0;
-					break;
-				}
-
-				if(buffer_count == 1) {
-					last_cross_timestamp = e.xcrossing.time;
-				}
-
-				if (!buffer_count || (buffer[buffer_count - 1] != region)) {
-					buffer[buffer_count] = region;
-					buffer_count++;
-				}
-
-				if(buffer_count == 9 && buffer[0] == buffer[buffer_count - 1]){
-					int diff;
-					XNextEvent(dpy, &e);
-
-					while(e.type != ButtonRelease){
-						XNextEvent(dpy, &e);
-					}
-
-					XFetchName(dpy, e.xcrossing.window, &region_name);
-					region = region_name[0] - 48;
-					diff = region - buffer[8];
-					if (!diff) {
+					if (buffer_count != 2) {
+						XClearWindow(dpy, toplevel);
+						update_display(dpy, toplevel, shift_modifier, help_screen);
+						buffer_count = 1;
+						buffer[0] = 0;
 						sent = 1;
-						buffer_count = 0;
 						break;
 					}
-					if (!(DIRECTION(buffer[7], buffer[8]))){
-						if (diff > 0) {
-							diff = diff - MAX_REGIONS + 1;
-						}
+				} else if (code) {
+					if ((shift_modifier && isalpha(c)) || state_mod) {
+						XTestFakeKeyEvent(dpy, Shift_code, True, 0);
+						XTestFakeKeyEvent(dpy, code, True, 0);
+						XTestFakeKeyEvent(dpy, code, False, 0);
+						XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+					} else if (ctrl_modifier) {
+						XTestFakeKeyEvent(dpy, Control_code, True, 0);
+						XTestFakeKeyEvent(dpy, code, True, 0);
+						XTestFakeKeyEvent(dpy, code, False, 0);
+						XTestFakeKeyEvent(dpy, Control_code, False, 0);
+						ctrl_modifier = 0;
+					} else if (alt_key) {
+						XTestFakeKeyEvent(dpy, Alt_code, True, 0);
+						XTestFakeKeyEvent(dpy, code, True, 0);
+						XTestFakeKeyEvent(dpy, code, False, 0);
+						XTestFakeKeyEvent(dpy, Alt_code, False, 0);
+						alt_key = 0;
 					} else {
-						if (diff < 0) {
-							diff = diff + MAX_REGIONS - 1;
-						}
+						XTestFakeKeyEvent(dpy, code, True, 0);
+						XTestFakeKeyEvent(dpy, code, False, 0);
 					}
-					toplevel = resize_window(dpy, toplevel, diff);
+					if (shift_modifier == 1) {
+						shift_modifier = 0;
+						XClearWindow(dpy, toplevel);
+						update_display(dpy, toplevel, shift_modifier, help_screen);
+					}
+				}
+
+				sent = 1;
+				buffer_count = 1;
+				buffer[0] = 0;
+				break;
+			}
+
+			if(buffer_count == 1) {
+				last_cross_timestamp = e.xcrossing.time;
+			}
+
+			if (!buffer_count || (buffer[buffer_count - 1] != region)) {
+				buffer[buffer_count] = region;
+				buffer_count++;
+			}
+
+			if(buffer_count == 9 && buffer[0] == buffer[buffer_count - 1]){
+				int diff;
+				XNextEvent(dpy, &e);
+
+				while(e.type != ButtonRelease){
+					XNextEvent(dpy, &e);
+				}
+
+				XFetchName(dpy, e.xcrossing.window, &region_name);
+				region = region_name[0] - 48;
+				diff = region - buffer[8];
+				if (!diff) {
 					sent = 1;
 					buffer_count = 0;
-					update_display(dpy, toplevel, shift_modifier, help_screen);
+					break;
 				}
-				break;
-			case Expose:
-			case ConfigureNotify:
-				XMapWindow(dpy, toplevel);
+				if (!(DIRECTION(buffer[7], buffer[8]))){
+					if (diff > 0) {
+						diff = diff - MAX_REGIONS + 1;
+					}
+				} else {
+					if (diff < 0) {
+						diff = diff + MAX_REGIONS - 1;
+					}
+				}
+				toplevel = resize_window(dpy, toplevel, diff);
+				sent = 1;
+				buffer_count = 0;
 				update_display(dpy, toplevel, shift_modifier, help_screen);
-				break;
-			case ClientMessage:
-				if ((e.xclient.message_type == mb_im_invoker_command) ||
-					(e.xclient.message_type == mtp_im_invoker_command)) {
-					if (e.xclient.data.l[0] == KeyboardShow) {
+			}
+			break;
+		case Expose:
+		case ConfigureNotify:
+			XMapWindow(dpy, toplevel);
+			update_display(dpy, toplevel, shift_modifier, help_screen);
+			break;
+		case ClientMessage:
+			if ((e.xclient.message_type == mb_im_invoker_command) ||
+				(e.xclient.message_type == mtp_im_invoker_command)) {
+				if (e.xclient.data.l[0] == KeyboardShow) {
+					XMapWindow(dpy, toplevel);
+					update_display(dpy, toplevel, shift_modifier, help_screen);
+					visible = 1;
+				}
+				if (e.xclient.data.l[0] == KeyboardHide) {
+					XUnmapWindow(dpy, toplevel);
+					XSync(dpy, False);
+					visible = 0;
+				}
+				if (e.xclient.data.l[0] == KeyboardToggle) {
+					if (visible) {
+						XUnmapWindow(dpy, toplevel);
+						XSync(dpy, False);
+						visible = 0;
+					} else {
 						XMapWindow(dpy, toplevel);
 						update_display(dpy, toplevel, shift_modifier, help_screen);
 						visible = 1;
 					}
-					if (e.xclient.data.l[0] == KeyboardHide) {
-						XUnmapWindow(dpy, toplevel);
-						XSync(dpy, False);
-						visible = 0;
-					}
-					if (e.xclient.data.l[0] == KeyboardToggle) {
-						if (visible) {
-							XUnmapWindow(dpy, toplevel);
-							XSync(dpy, False);
-							visible = 0;
-						} else {
-							XMapWindow(dpy, toplevel);
-							update_display(dpy, toplevel, shift_modifier, help_screen);
-							visible = 1;
-						}
-					}
-					break;
-				}
-				if (e.xclient.data.l[0] == wmDeleteMessage) {
-					run = 0;
-					break;
 				}
 				break;
 			}
+			if (e.xclient.data.l[0] == wmDeleteMessage) {
+				run = 0;
+				break;
+			}
+			break;
+		}
 	}
 
 	close_window(dpy, toplevel);
