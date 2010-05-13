@@ -114,6 +114,7 @@ void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
 		XSelectInput(dpy, region_window, EnterWindowMask | LeaveWindowMask |
 				ButtonPressMask | ButtonReleaseMask);
 		XMapWindow(dpy, region_window);
+		XDestroyRegion(region);
 	}
 	XFree(wm_hints);
 }
