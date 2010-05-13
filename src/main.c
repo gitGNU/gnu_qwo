@@ -90,6 +90,17 @@ int init_keycodes(){
 	return 0;
 }
 
+char get_region_name(Window win) {
+	char *region_name;
+	char value;
+
+	XFetchName(dpy, win, &region_name);
+	value = region_name[0] - 48;
+	XFree(region_name);
+
+	return value;
+}
+
 int main(int argc, char **argv)
 {
 	char *display_name;
@@ -162,7 +173,6 @@ int main(int argc, char **argv)
 
 	while(run) {
 		XEvent e;
-		char *region_name;
 		int region;
 		int state_mod = 0;
 		KeyCode code;
@@ -171,9 +181,7 @@ int main(int argc, char **argv)
 		XNextEvent(dpy, &e);
 		switch (e.type) {
 		case ButtonPress:
-			XFetchName(dpy, e.xbutton.window, &region_name);
-			region = region_name[0] - 48;
-			XFree(region_name);
+			region = get_region_name(e.xbutton.window);
 			XUngrabPointer(dpy, CurrentTime);
 			buffer[0] = region;
 			last_pressed = e.xbutton.time;
@@ -181,9 +189,7 @@ int main(int argc, char **argv)
 			sent = 0;
 			break;
 		case ButtonRelease:
-			XFetchName(dpy, e.xbutton.window, &region_name);
-			region = region_name[0] - 48;
-			XFree(region_name);
+			region = get_region_name(e.xbutton.window);
 			if (buffer[0] == 0 && !region && sent)
 				break;
 			ksym = char_free[buffer[0]][region];
@@ -219,9 +225,7 @@ int main(int argc, char **argv)
 			buffer_count = 0;
 			break;
 		case EnterNotify:
-			XFetchName(dpy, e.xcrossing.window, &region_name);
-			region = region_name[0] - 48;
-			XFree(region_name);
+			region = get_region_name(e.xcrossing.window);
 			KeySym index;
 
 			char c = '\0';
@@ -342,9 +346,7 @@ int main(int argc, char **argv)
 					XNextEvent(dpy, &e);
 				}
 
-				XFetchName(dpy, e.xcrossing.window, &region_name);
-				region = region_name[0] - 48;
-				XFree(region_name);
+				region = get_region_name(e.xcrossing.window);
 				diff = region - buffer[8];
 				if (!diff) {
 					sent = 1;
