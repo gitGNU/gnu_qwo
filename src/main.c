@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008, 2009 Charles Clement <caratorn _at_ gmail.com>
+ *  Copyright (C) 2008, 2009, 2010 Charles Clement <caratorn _at_ gmail.com>
  *
  *  This file is part of qwo.
  *
@@ -20,21 +20,12 @@
  *
  */
 
-#include <window.h>
+#include <init.h>
 #include <unistd.h>
-#include <getopt.h>
 #include <ctype.h>
 
 #include <X11/keysym.h>
 #include <locale.h>
-
-#ifdef HAVE_LIBCONFIG
-#include <libconfig.h>
-#endif
-
-#define CONFIG_FILE		"/.qworc"
-
-#define MAX_CHAR_PER_REGION		 5
 
 #define MAX_GESTURES_BUFFER      10
 
@@ -70,8 +61,6 @@ KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
 
 static KeyCode Shift_code, Control_code, Alt_code;
 
-KeySym custom_charset[MAX_REGIONS - 1][MAX_CHAR_PER_REGION];
-
 void usage(){
 	fprintf(stdout,
 		"Usage: qwo [options]\n\n"
@@ -93,94 +82,6 @@ void print_version(){
 	fprintf(stdout, copyright_notice);
 }
 
-#ifdef HAVE_LIBCONFIG
-int read_config(char *config_path, char **geometry)
-{
-	int j, i = 0;
-	config_t configuration;
-	FILE * file;
-	const char *keysym_name, *string = NULL;
-	const char *fg_color = NULL;
-	const char *bg_color = NULL;
-	const char *delimiter_color = NULL;
-	KeySym key;
-	const config_setting_t *keymap;
-	const config_setting_t *line;
-
-	if ((file = fopen(config_path, "r")) == NULL) {
-		fprintf(stderr, "Can't open configuration file %s\n", config_path);
-		return 0;
-	}
-	config_init(&configuration);
-	if (config_read(&configuration, file) == CONFIG_FALSE) {
-		fprintf(stderr, "File %s, Line %i : %s\n", config_path,
-				config_error_line(&configuration),
-				config_error_text(&configuration));
-		exit(3);
-	}
-	fclose(file);
-	keymap = config_lookup(&configuration, "charset");
-
-	if (keymap) {
-		for (i = 0 ; i < config_setting_length(keymap) ; i++) {
-			line = config_setting_get_elem(keymap, i);
-			for (j = 0 ; j < config_setting_length(line); j++) {
-				keysym_name = config_setting_get_string_elem(line, j);
-				if ((key = XStringToKeysym(keysym_name)) == NoSymbol) {
-					fprintf(stderr, "KeySym not found : %s\n",
-							config_setting_get_string_elem(line, j));
-					exit(3);
-				}
-				custom_charset[i][j] = key & 0xffffff;
-			}
-			for (; j < MAX_CHAR_PER_REGION; j++) {
-				custom_charset[i][j] = '\0';
-			}
-		}
-		for (; i < MAX_REGIONS - 1 ; i++) {
-			for ( j = 0 ; j < MAX_CHAR_PER_REGION; j++) {
-				custom_charset[i][j] = '\0';
-			}
-		}
-	}
-
-#if LIBCONFIG_LOOKUP_RETURN_CODE
-	config_lookup_string(&configuration, "geometry", &string);
-	config_lookup_string(&configuration, "foreground", &fg_color);
-	config_lookup_string(&configuration, "background", &bg_color);
-	config_lookup_string(&configuration, "delimiter-color", &delimiter_color);
-#else
-	string = config_lookup_string(&configuration, "geometry");
-	fg_color = config_lookup_string(&configuration, "foreground");
-	bg_color = config_lookup_string(&configuration, "background");
-	delimiter_color = config_lookup_string(&configuration, "delimiter-color");
-#endif
-
-	if (string) {
-		*geometry = (char *) malloc(sizeof(char) * strlen(string));
-		strcpy(*geometry, string);
-	}
-
-	if(fg_color && (!(defined_colors & (1 << FG_COLOR)))) {
-		color_scheme[FG_COLOR] = convert_color(fg_color);
-		defined_colors |= (1 << FG_COLOR);
-	}
-
-	if(bg_color && (!(defined_colors & (1 << BG_COLOR)))) {
-		color_scheme[BG_COLOR] = convert_color(bg_color);
-		defined_colors |= (1 << BG_COLOR);
-	}
-
-	if(delimiter_color && (!(defined_colors & (1 << GRID_COLOR)))) {
-		color_scheme[GRID_COLOR] = convert_color(delimiter_color);
-		defined_colors |= (1 << GRID_COLOR);
-	}
-
-	config_destroy(&configuration);
-	return 1;
-}
-#endif
-
 int init_keycodes(){
 	Shift_code = XKeysymToKeycode(dpy, XK_Shift_L);
 	Control_code = XKeysymToKeycode(dpy, XK_Control_L);
@@ -197,13 +98,8 @@ int main(int argc, char **argv)
 	int event_base, error_base;
 	int shape_ext_major, shape_ext_minor;
 
-	char *config_path = NULL;
-
-	char *user_geometry = NULL;
-	char *config_geometry = NULL;
-	char *switch_geometry = NULL;
-
 	int loaded_config = 0;
+	int parse_code = 0;
 	int run = 1;
 	int visible = 1;
 	int buffer[MAX_GESTURES_BUFFER];
@@ -216,52 +112,20 @@ int main(int argc, char **argv)
 	Time last_cross_timestamp = 0L;
 	Time last_pressed = 0L;
 
-	int options;
-	int option_index = 0;
-	static struct option long_options[] = {
-		{"help",			no_argument      , 0, 'h'},
-		{"version",			no_argument      , 0, 'v'},
-		{"foreground",		required_argument, 0, 'f'},
-		{"background",		required_argument, 0, 'b'},
-		{"delimiter-color", required_argument, 0, 'l'},
-		{"config",			required_argument, 0, 'c'},
-		{"geometry",		required_argument, 0, 'g'},
-		{0, 0, 0, 0}
-	};
-
 	display_name = XDisplayName(NULL);
 	dpy = XOpenDisplay(display_name);
 
-	while ((options = getopt_long(argc, argv, "c:g:f:b:d:hv", long_options,
-					&option_index)) != -1)
-	{
-		switch(options){
-			case 'c':
-				config_path = optarg;
-				break;
-			case 'g':
-				switch_geometry = optarg;
-				break;
-			case 'f':
-				color_scheme[FG_COLOR] = convert_color(optarg);
-				defined_colors |= (1 << FG_COLOR);
-				break;
-			case 'b':
-				color_scheme[BG_COLOR] = convert_color(optarg);
-				defined_colors |= (1 << BG_COLOR);
-				break;
-			case 'd':
-				color_scheme[GRID_COLOR] = convert_color(optarg);
-				defined_colors |= (1 << GRID_COLOR);
-				break;
-			case 'v':
-				print_version();
-				exit(0);
-			default:
-				usage();
-				exit(0);
-		}
-	}
+	parse_code = parse_command_line(argc, argv);
+
+	if (parse_code == 1)
+		print_version();
+	else if (parse_code == 2)
+		usage();
+
+	if (parse_code)
+		exit(0);
+
+	read_config();
 
 	if (!setlocale(LC_CTYPE, ""))
 	{
@@ -281,38 +145,15 @@ int main(int argc, char **argv)
 		exit(2);
 	}
 
-#ifdef HAVE_LIBCONFIG
-	if (config_path) {
-		loaded_config = read_config(config_path, &config_geometry);
-	} else {
-		char config_path[MAX_CONFIG_PATH];
-		char *home_dir = getenv("HOME");
-		strncpy(config_path, home_dir, MAX_CONFIG_PATH);
-		strncat(config_path + strlen(home_dir), CONFIG_FILE,
-				MAX_CONFIG_PATH - strlen(home_dir));
-		loaded_config = read_config(config_path, &config_geometry);
-	}
-#endif
-
 	XShapeQueryVersion(dpy, &shape_ext_major, &shape_ext_minor);
 
 	toplevel = XCreateWindow(dpy, DefaultRootWindow(dpy), 0, 0, DEFAULT_WIDTH,
 			DEFAULT_HEIGHT, 0, CopyFromParent, CopyFromParent, CopyFromParent,
 			0, NULL);
 
-	if (switch_geometry){
-		user_geometry = switch_geometry;
-	} else {
-		user_geometry = config_geometry;
-	}
-
-	if (init_window(toplevel, user_geometry)){
+	if (init_window(toplevel)){
 		fprintf(stderr, "Can't initialise window\n");
 		exit(3);
-	}
-
-	if (config_geometry) {
-		free(config_geometry);
 	}
 
 	init_keycodes();

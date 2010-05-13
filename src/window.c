@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008, 2009 Charles Clement <caratorn _at_ gmail.com>
+ *  Copyright (C) 2008, 2009, 2010 Charles Clement <caratorn _at_ gmail.com>
  *
  *  This file is part of qwo.
  *
@@ -23,6 +23,8 @@
 #include <window.h>
 
 Display *dpy;
+
+char geometry_config[MAX_GEOMETRY_STRING] = "\0";
 
 unsigned int defined_colors = 0;
 
@@ -347,7 +349,7 @@ Window resize_window(Window win, int number){
 	return win;
 }
 
-int init_window(Window win, char *geometry){
+int init_window(Window win){
 	unsigned long valuemask;
 	XGCValues xgc;
 	unsigned int width, height;
@@ -363,7 +365,7 @@ int init_window(Window win, char *geometry){
 
 	set_window_properties(win);
 
-	return_mask = XParseGeometry(geometry, &xpos, &ypos, &width, &height);
+	return_mask = XParseGeometry(geometry_config, &xpos, &ypos, &width, &height);
 
 	if ((width < MIN_WIDTH) || (width > MAX_WIDTH)){
 		width = DEFAULT_WIDTH;

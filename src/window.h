@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2008, 2009 Charles Clement <caratorn _at_ gmail.com>
+ *  Copyright (C) 2008, 2009, 2010 Charles Clement <caratorn _at_ gmail.com>
  *
  *  This file is part of qwo.
  *
@@ -36,8 +36,8 @@
 
 #include <Imlib2.h>
 
-#define DEFAULT_WIDTH   300
-#define DEFAULT_HEIGHT  DEFAULT_WIDTH
+#define DEFAULT_WIDTH		300
+#define DEFAULT_HEIGHT		DEFAULT_WIDTH
 
 #define MIN_WIDTH		180
 #define MIN_HEIGHT		MIN_WIDTH
@@ -46,23 +46,26 @@
 
 #define INCREMENT		60
 
-#define MAX_REGIONS 9
-#define MAX_POINTS  9
+#define MAX_REGIONS		9
+#define MAX_POINTS		9
 
-#define DEFAULT_DELTA                   (DEFAULT_WIDTH >> 4)
+#define DEFAULT_DELTA		(DEFAULT_WIDTH >> 4)
 
-#define DEFAULT_GRID_COLOR				"orange"
+#define MAX_GEOMETRY_STRING	20
 
-#define MAX_CONFIG_PATH 256
-
+#define MAX_CONFIG_PATH		256
 #define DATA_PATH		DATADIR "/" PACKAGE_NAME "/"
 
-#define MAX_IMAGE_NAME 10
-#define MAX_IMAGE_PATH 50
-
+#define MAX_IMAGE_NAME		10
+#define MAX_IMAGE_PATH		50
+#define IMAGE_SUFFIXE		".png"
 #define MAX_IMAGES		3
 
-#define IMAGE_SUFFIXE ".png"
+
+#define DEFAULT_GRID_COLOR	"orange"
+#define FG_COLOR		0
+#define BG_COLOR		1
+#define GRID_COLOR		2
 
 #define FILL_REGION4(a, b, c, d)        {a, b, c, d, a, a, a, a, a}
 #define FILL_REGION5(a, b, c, d, e)     {a, b, c, d, e, a, a, a, a}
@@ -73,12 +76,9 @@
 #define DIRECTION(a, b)  \
 		(abs(b - a) == 1) ? ( (b - a) == 1) : (b - a) < 0
 
-#define FG_COLOR		0
-#define BG_COLOR		1
-#define GRID_COLOR		2
-
 extern Display *dpy;
 
+extern char geometry_config[MAX_GEOMETRY_STRING];
 extern XColor color_scheme[3];
 extern unsigned int defined_colors;
 
@@ -94,7 +94,7 @@ typedef enum {
 
 void update_display(Window toplevel, int shift, int help);
 Window resize_window(Window win, int number);
-int init_window(Window win, char *user_geometry);
+int init_window(Window win);
 void close_window(Window win);
 XColor convert_color(const char *color);
 
