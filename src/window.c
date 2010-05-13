@@ -22,22 +22,22 @@
 
 #include <window.h>
 
-XColor color_scheme[3];
-static Imlib_Color_Modifier modifier;
-
 unsigned int defined_colors = 0;
 
-Pixmap char_pixmaps[3];
-
-const char image_names[][MAX_IMAGE_NAME] = { "normal", "caps", "extra" };
+XColor color_scheme[3];
 
 Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
-GC gc;
+static Imlib_Color_Modifier modifier;
+static Pixmap char_pixmaps[3];
+
+static const char image_names[][MAX_IMAGE_NAME] = { "normal", "caps", "extra" };
+
+static GC gc;
 
 static unsigned int window_size;
 
-void init_coordinates(XPoint point[], int width, int height, int delta){
+static void init_coordinates(XPoint point[], int width, int height, int delta){
 
 	/*
 	 * 0-7 are outer points
@@ -73,7 +73,7 @@ void init_coordinates(XPoint point[], int width, int height, int delta){
 
 }
 
-void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
+static void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
 {
 	Window region_window;
 	Region region;
@@ -119,13 +119,13 @@ void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
 	XFree(wm_hints);
 }
 
-void init_colormap()
+static void init_colormap()
 {
 	modifier = imlib_create_color_modifier();
 	imlib_context_set_color_modifier(modifier);
 }
 
-void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
+static void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 {
 	XColor grid_color, exact;
 	Colormap cmap;
@@ -156,7 +156,7 @@ void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 
 }
 
-int load_charset(Display *dpy, int num, int width, int height){
+static int load_charset(Display *dpy, int num, int width, int height){
 	Visual *vis;
 	Colormap cm;
 	int depth;
@@ -229,7 +229,7 @@ int load_charset(Display *dpy, int num, int width, int height){
 	return 0;
 }
 
-int set_window_properties(Display *dpy, Window toplevel){
+static int set_window_properties(Display *dpy, Window toplevel){
 	XWMHints *wm_hints;
 	Atom net_wm_state_skip_taskbar, net_wm_state_skip_pager, net_wm_state,
 		net_wm_window_type, net_wm_window_type_toolbar,

@@ -80,8 +80,6 @@
 extern XColor color_scheme[3];
 extern unsigned int defined_colors;
 
-extern Pixmap char_pixmaps[3];
-
 extern Atom wmDeleteMessage, mtp_im_invoker_command, mb_im_invoker_command;
 
 typedef enum {
