@@ -217,6 +217,7 @@ int main(int argc, char **argv)
 	int sent = 0;
 	Time last_cross_timestamp = 0L;
 	Time last_pressed = 0L;
+
 	int options;
 	int option_index = 0;
 	static struct option long_options[] = {
@@ -504,6 +505,7 @@ int main(int argc, char **argv)
 
 				XFetchName(dpy, e.xcrossing.window, &region_name);
 				region = region_name[0] - 48;
+				XFree(region_name);
 				diff = region - buffer[8];
 				if (!diff) {
 					sent = 1;
