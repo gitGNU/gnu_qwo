@@ -22,6 +22,8 @@
 
 #include <window.h>
 
+Display *dpy;
+
 unsigned int defined_colors = 0;
 
 XColor color_scheme[3];
@@ -73,7 +75,7 @@ static void init_coordinates(XPoint point[], int width, int height, int delta){
 
 }
 
-static void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
+static void init_regions(Window toplevel, XPoint point[], int size)
 {
 	Window region_window;
 	Region region;
@@ -125,7 +127,7 @@ static void init_colormap()
 	imlib_context_set_color_modifier(modifier);
 }
 
-static void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
+static void draw_grid(Pixmap pixmap, XPoint point[])
 {
 	XColor grid_color, exact;
 	Colormap cmap;
@@ -156,7 +158,7 @@ static void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 
 }
 
-static int load_charset(Display *dpy, int num, int width, int height){
+static int load_charset(int num, int width, int height){
 	Visual *vis;
 	Colormap cm;
 	int depth;
@@ -229,7 +231,7 @@ static int load_charset(Display *dpy, int num, int width, int height){
 	return 0;
 }
 
-static int set_window_properties(Display *dpy, Window toplevel){
+static int set_window_properties(Window toplevel){
 	XWMHints *wm_hints;
 	Atom net_wm_state_skip_taskbar, net_wm_state_skip_pager, net_wm_state,
 		net_wm_window_type, net_wm_window_type_toolbar,
@@ -282,7 +284,7 @@ static int set_window_properties(Display *dpy, Window toplevel){
 	return 0;
 }
 
-void update_display(Display *dpy, Window toplevel, int shift, int help){
+void update_display(Window toplevel, int shift, int help){
 
 	XClearWindow(dpy, toplevel);
 	if (help) {
@@ -295,7 +297,7 @@ void update_display(Display *dpy, Window toplevel, int shift, int help){
 	XSync(dpy, False);
 }
 
-int create_window(Display *dpy, Window win, int size){
+int create_window(Window win, int size){
 	int delta, i;
 	int status = 0;
 	XPoint coordinates[20];
@@ -307,15 +309,15 @@ int create_window(Display *dpy, Window win, int size){
 	delta = (window_size * DEFAULT_DELTA) / DEFAULT_WIDTH;
 
 	init_coordinates(coordinates, window_size, window_size, delta);
-	init_regions(dpy, win, coordinates, window_size);
+	init_regions(win, coordinates, window_size);
 
 	XSelectInput(dpy, win, SubstructureNotifyMask | StructureNotifyMask | ExposureMask);
 
 	for( i = 0; i < MAX_IMAGES; i++) {
 		char_pixmaps[i] = XCreatePixmap(dpy, win, window_size, window_size,
 				DefaultDepth(dpy, DefaultScreen(dpy)));
-		load_charset(dpy, i, window_size, window_size);
-		draw_grid(dpy, char_pixmaps[i], coordinates);
+		load_charset(i, window_size, window_size);
+		draw_grid(char_pixmaps[i], coordinates);
 	}
 
 	XMapWindow(dpy, win);
@@ -323,7 +325,7 @@ int create_window(Display *dpy, Window win, int size){
 	return status;
 }
 
-Window resize_window(Display *dpy, Window win, int number){
+Window resize_window(Window win, int number){
 	int size;
 
 	size = window_size + (number * INCREMENT);
@@ -340,12 +342,12 @@ Window resize_window(Display *dpy, Window win, int number){
 	XFreePixmap(dpy, char_pixmaps[1]);
 	XFreePixmap(dpy, char_pixmaps[2]);
 
-	create_window(dpy, win, size);
+	create_window(win, size);
 
 	return win;
 }
 
-int init_window(Display *dpy, Window win, char *geometry){
+int init_window(Window win, char *geometry){
 	unsigned long valuemask;
 	XGCValues xgc;
 	unsigned int width, height;
@@ -359,7 +361,7 @@ int init_window(Display *dpy, Window win, char *geometry){
 
 	gc = XCreateGC(dpy, DefaultRootWindow(dpy), valuemask, &xgc);
 
-	set_window_properties(dpy, win);
+	set_window_properties(win);
 
 	return_mask = XParseGeometry(geometry, &xpos, &ypos, &width, &height);
 
@@ -390,12 +392,12 @@ int init_window(Display *dpy, Window win, char *geometry){
 
 	window_size = width;
 
-	status = create_window(dpy, win, width);
+	status = create_window(win, width);
 
 	return status;
 }
 
-void close_window(Display *dpy, Window toplevel){
+void close_window(Window toplevel){
 
 	free(modifier);
 	XFreeGC(dpy, gc);
@@ -407,7 +409,7 @@ void close_window(Display *dpy, Window toplevel){
 
 }
 
-XColor convert_color(Display *dpy, const char *color){
+XColor convert_color(const char *color){
 	XColor color_def, exact;
 	Colormap cmap;
 	char color_spec[13] = "rgb:../../..\0";

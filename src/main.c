@@ -94,7 +94,7 @@ void print_version(){
 }
 
 #ifdef HAVE_LIBCONFIG
-int read_config(Display *dpy, char *config_path, char **geometry)
+int read_config(char *config_path, char **geometry)
 {
 	int j, i = 0;
 	config_t configuration;
@@ -162,17 +162,17 @@ int read_config(Display *dpy, char *config_path, char **geometry)
 	}
 
 	if(fg_color && (!(defined_colors & (1 << FG_COLOR)))) {
-		color_scheme[FG_COLOR] = convert_color(dpy, fg_color);
+		color_scheme[FG_COLOR] = convert_color(fg_color);
 		defined_colors |= (1 << FG_COLOR);
 	}
 
 	if(bg_color && (!(defined_colors & (1 << BG_COLOR)))) {
-		color_scheme[BG_COLOR] = convert_color(dpy, bg_color);
+		color_scheme[BG_COLOR] = convert_color(bg_color);
 		defined_colors |= (1 << BG_COLOR);
 	}
 
 	if(delimiter_color && (!(defined_colors & (1 << GRID_COLOR)))) {
-		color_scheme[GRID_COLOR] = convert_color(dpy, delimiter_color);
+		color_scheme[GRID_COLOR] = convert_color(delimiter_color);
 		defined_colors |= (1 << GRID_COLOR);
 	}
 
@@ -181,7 +181,7 @@ int read_config(Display *dpy, char *config_path, char **geometry)
 }
 #endif
 
-int init_keycodes(Display *dpy){
+int init_keycodes(){
 	Shift_code = XKeysymToKeycode(dpy, XK_Shift_L);
 	Control_code = XKeysymToKeycode(dpy, XK_Control_L);
 	Alt_code = XKeysymToKeycode(dpy, XK_Alt_L);
@@ -191,7 +191,6 @@ int init_keycodes(Display *dpy){
 
 int main(int argc, char **argv)
 {
-	Display *dpy;
 	char *display_name;
 	Window toplevel;
 
@@ -244,15 +243,15 @@ int main(int argc, char **argv)
 				switch_geometry = optarg;
 				break;
 			case 'f':
-				color_scheme[FG_COLOR] = convert_color(dpy, optarg);
+				color_scheme[FG_COLOR] = convert_color(optarg);
 				defined_colors |= (1 << FG_COLOR);
 				break;
 			case 'b':
-				color_scheme[BG_COLOR] = convert_color(dpy, optarg);
+				color_scheme[BG_COLOR] = convert_color(optarg);
 				defined_colors |= (1 << BG_COLOR);
 				break;
 			case 'd':
-				color_scheme[GRID_COLOR] = convert_color(dpy, optarg);
+				color_scheme[GRID_COLOR] = convert_color(optarg);
 				defined_colors |= (1 << GRID_COLOR);
 				break;
 			case 'v':
@@ -284,14 +283,14 @@ int main(int argc, char **argv)
 
 #ifdef HAVE_LIBCONFIG
 	if (config_path) {
-		loaded_config = read_config(dpy, config_path, &config_geometry);
+		loaded_config = read_config(config_path, &config_geometry);
 	} else {
 		char config_path[MAX_CONFIG_PATH];
 		char *home_dir = getenv("HOME");
 		strncpy(config_path, home_dir, MAX_CONFIG_PATH);
 		strncat(config_path + strlen(home_dir), CONFIG_FILE,
 				MAX_CONFIG_PATH - strlen(home_dir));
-		loaded_config = read_config(dpy, config_path, &config_geometry);
+		loaded_config = read_config(config_path, &config_geometry);
 	}
 #endif
 
@@ -307,7 +306,7 @@ int main(int argc, char **argv)
 		user_geometry = config_geometry;
 	}
 
-	if (init_window(dpy, toplevel, user_geometry)){
+	if (init_window(toplevel, user_geometry)){
 		fprintf(stderr, "Can't initialise window\n");
 		exit(3);
 	}
@@ -316,9 +315,9 @@ int main(int argc, char **argv)
 		free(config_geometry);
 	}
 
-	init_keycodes(dpy);
+	init_keycodes();
 
-	update_display(dpy, toplevel, shift_modifier, help_screen);
+	update_display(toplevel, shift_modifier, help_screen);
 
 	while(run) {
 		XEvent e;
@@ -359,7 +358,7 @@ int main(int argc, char **argv)
 				XTestFakeKeyEvent(dpy, Shift_code, False, 0);
 			} else if (ksym == XK_Select) {
 				help_screen = !help_screen;
-				update_display(dpy, toplevel, shift_modifier, help_screen);
+				update_display(toplevel, shift_modifier, help_screen);
 			} else {
 				code = XKeysymToKeycode(dpy, ksym);
 
@@ -444,7 +443,7 @@ int main(int argc, char **argv)
 
 					if (buffer_count != 2) {
 						XClearWindow(dpy, toplevel);
-						update_display(dpy, toplevel, shift_modifier, help_screen);
+						update_display(toplevel, shift_modifier, help_screen);
 						buffer_count = 1;
 						buffer[0] = 0;
 						sent = 1;
@@ -475,7 +474,7 @@ int main(int argc, char **argv)
 					if (shift_modifier == 1) {
 						shift_modifier = 0;
 						XClearWindow(dpy, toplevel);
-						update_display(dpy, toplevel, shift_modifier, help_screen);
+						update_display(toplevel, shift_modifier, help_screen);
 					}
 				}
 
@@ -520,23 +519,23 @@ int main(int argc, char **argv)
 						diff = diff + MAX_REGIONS - 1;
 					}
 				}
-				toplevel = resize_window(dpy, toplevel, diff);
+				toplevel = resize_window(toplevel, diff);
 				sent = 1;
 				buffer_count = 0;
-				update_display(dpy, toplevel, shift_modifier, help_screen);
+				update_display(toplevel, shift_modifier, help_screen);
 			}
 			break;
 		case Expose:
 		case ConfigureNotify:
 			XMapWindow(dpy, toplevel);
-			update_display(dpy, toplevel, shift_modifier, help_screen);
+			update_display(toplevel, shift_modifier, help_screen);
 			break;
 		case ClientMessage:
 			if ((e.xclient.message_type == mb_im_invoker_command) ||
 				(e.xclient.message_type == mtp_im_invoker_command)) {
 				if (e.xclient.data.l[0] == KeyboardShow) {
 					XMapWindow(dpy, toplevel);
-					update_display(dpy, toplevel, shift_modifier, help_screen);
+					update_display(toplevel, shift_modifier, help_screen);
 					visible = 1;
 				}
 				if (e.xclient.data.l[0] == KeyboardHide) {
@@ -551,7 +550,7 @@ int main(int argc, char **argv)
 						visible = 0;
 					} else {
 						XMapWindow(dpy, toplevel);
-						update_display(dpy, toplevel, shift_modifier, help_screen);
+						update_display(toplevel, shift_modifier, help_screen);
 						visible = 1;
 					}
 				}
@@ -565,7 +564,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	close_window(dpy, toplevel);
+	close_window(toplevel);
 
 	exit(0);
 }

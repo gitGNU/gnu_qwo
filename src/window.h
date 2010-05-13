@@ -77,6 +77,8 @@
 #define BG_COLOR		1
 #define GRID_COLOR		2
 
+extern Display *dpy;
+
 extern XColor color_scheme[3];
 extern unsigned int defined_colors;
 
@@ -90,10 +92,10 @@ typedef enum {
 } KeyboardOperation;
 
 
-void update_display(Display *dpy, Window toplevel, int shift, int help);
-Window resize_window(Display *dpy, Window win, int number);
-int init_window(Display *dpy, Window win, char *user_geometry);
-void close_window(Display *dpy, Window win);
-XColor convert_color(Display *dpy, const char *color);
+void update_display(Window toplevel, int shift, int help);
+Window resize_window(Window win, int number);
+int init_window(Window win, char *user_geometry);
+void close_window(Window win);
+XColor convert_color(const char *color);
 
 #endif /* WINDOW_H */
