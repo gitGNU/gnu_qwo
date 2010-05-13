@@ -23,6 +23,8 @@
 #include <window.h>
 
 XColor color_scheme[3];
+static Imlib_Color_Modifier modifier;
+
 unsigned int defined_colors = 0;
 
 Pixmap char_pixmaps[3];
@@ -116,6 +118,12 @@ void init_regions(Display *dpy, Window toplevel, XPoint point[], int size)
 	XFree(wm_hints);
 }
 
+void init_colormap()
+{
+	modifier = imlib_create_color_modifier();
+	imlib_context_set_color_modifier(modifier);
+}
+
 void draw_grid(Display *dpy, Pixmap pixmap, XPoint point[])
 {
 	XColor grid_color, exact;
@@ -189,13 +197,13 @@ int load_charset(Display *dpy, int num, int width, int height){
 	imlib_context_set_image(image);
 
 	if (defined_colors & (1 << FG_COLOR)) {
-		Imlib_Color_Modifier modifier;
 		DATA8 rt[256], gt[256], bt[256], at[256];
 		unsigned char red, green, blue;
 		int j;
 
-		modifier = imlib_create_color_modifier();
-		imlib_context_set_color_modifier(modifier);
+		if(!modifier)
+			init_colormap();
+
 		imlib_get_color_modifier_tables(rt, gt, bt, at);
 
 		red = color_scheme[FG_COLOR].red >> 8;
@@ -388,6 +396,7 @@ int init_window(Display *dpy, Window win, char *geometry){
 
 void close_window(Display *dpy, Window toplevel){
 
+	free(modifier);
 	XFreeGC(dpy, gc);
 	XFreePixmap(dpy, char_pixmaps[0]);
 	XFreePixmap(dpy, char_pixmaps[1]);
