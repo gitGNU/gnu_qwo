@@ -120,7 +120,6 @@ int main(int argc, char **argv)
 	int event_base, error_base;
 	int shape_ext_major, shape_ext_minor;
 
-	int loaded_config = 0;
 	int parse_code = 0;
 	int run = 1;
 	int visible = 1;
@@ -238,7 +237,7 @@ int main(int argc, char **argv)
 
 			if ((region == 0) && buffer_count > 1 && buffer[0] == 0){
 
-				if ((buffer[1] == buffer[buffer_count - 1]) && loaded_config && (buffer_count > 2)) {
+				if ((buffer[1] == buffer[buffer_count - 1]) && (buffer_count > 2)) {
 					buffer_count = (buffer_count - 1) >> 1;
 
 					if (DIRECTION(buffer[1], buffer[2]))
