@@ -101,6 +101,17 @@ char get_region_name(Window win) {
 	return value;
 }
 
+void send_key(KeyCode code, KeyCode modifier)
+{
+	if (modifier)
+		XTestFakeKeyEvent(dpy, modifier, True, 0);
+	XTestFakeKeyEvent(dpy, code, True, 0);
+	XTestFakeKeyEvent(dpy, code, False, 0);
+	if (modifier)
+		XTestFakeKeyEvent(dpy, modifier, False, 0);
+
+}
+
 int main(int argc, char **argv)
 {
 	char *display_name;
@@ -199,10 +210,7 @@ int main(int argc, char **argv)
 				ctrl_modifier = 1;
 			} else if (ksym == XK_Insert) {
 				code = XKeysymToKeycode(dpy, ksym);
-				XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-				XTestFakeKeyEvent(dpy, code, True, 0);
-				XTestFakeKeyEvent(dpy, code, False, 0);
-				XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+				send_key(code, Shift_code);
 			} else if (ksym == XK_Select) {
 				help_screen = !help_screen;
 				update_display(toplevel, shift_modifier, help_screen);
@@ -216,11 +224,9 @@ int main(int argc, char **argv)
 				}
 
 				if (state_mod)
-					XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-				XTestFakeKeyEvent(dpy, code, True, 0);
-				XTestFakeKeyEvent(dpy, code, False, 0);
-				if (state_mod)
-					XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+					send_key(code, Shift_code);
+				else
+					send_key(code, 0);
 			}
 			buffer_count = 0;
 			break;
@@ -267,8 +273,7 @@ int main(int argc, char **argv)
 						code = XKeysymToKeycode(dpy, XK_BackSpace);
 						}
 					}
-					XTestFakeKeyEvent(dpy, code, True, 0);
-					XTestFakeKeyEvent(dpy, code, False, 0);
+					send_key(code, 0);
 				} else if (c == '>') {
 					if (buffer_count == 2) {
 						if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
@@ -276,8 +281,7 @@ int main(int argc, char **argv)
 						} else {
 							code = XKeysymToKeycode(dpy, XK_space);
 						}
-						XTestFakeKeyEvent(dpy, code, True, 0);
-						XTestFakeKeyEvent(dpy, code, False, 0);
+						send_key(code, 0);
 					} else if (shift_modifier) {
 						shift_modifier = 0;
 					} else if (buffer_count == 4) {
@@ -296,25 +300,15 @@ int main(int argc, char **argv)
 					}
 				} else if (code) {
 					if ((shift_modifier && isalpha(c)) || state_mod) {
-						XTestFakeKeyEvent(dpy, Shift_code, True, 0);
-						XTestFakeKeyEvent(dpy, code, True, 0);
-						XTestFakeKeyEvent(dpy, code, False, 0);
-						XTestFakeKeyEvent(dpy, Shift_code, False, 0);
+						send_key(code, Shift_code);
 					} else if (ctrl_modifier) {
-						XTestFakeKeyEvent(dpy, Control_code, True, 0);
-						XTestFakeKeyEvent(dpy, code, True, 0);
-						XTestFakeKeyEvent(dpy, code, False, 0);
-						XTestFakeKeyEvent(dpy, Control_code, False, 0);
+						send_key(code, Control_code);
 						ctrl_modifier = 0;
 					} else if (alt_key) {
-						XTestFakeKeyEvent(dpy, Alt_code, True, 0);
-						XTestFakeKeyEvent(dpy, code, True, 0);
-						XTestFakeKeyEvent(dpy, code, False, 0);
-						XTestFakeKeyEvent(dpy, Alt_code, False, 0);
+						send_key(code, Alt_code);
 						alt_key = 0;
 					} else {
-						XTestFakeKeyEvent(dpy, code, True, 0);
-						XTestFakeKeyEvent(dpy, code, False, 0);
+						send_key(code, 0);
 					}
 					if (shift_modifier == 1) {
 						shift_modifier = 0;
