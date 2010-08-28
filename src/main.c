@@ -32,7 +32,7 @@
 #define LONG_EXPOSURE_DELAY		2000L
 
 static const char *copyright_notice = "\
-Copyright (C) 2008-2009 Charles Clement\n\
+Copyright (C) 2008-2010 Charles Clement\n\
 qwo comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
 and you are welcome to redistribute it under certain conditions.\n";
 
