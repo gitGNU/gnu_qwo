@@ -41,10 +41,12 @@ static GC gc;
 
 static unsigned int window_size;
 
+/* Calculate the array of XPoint use to define the different regions
+ */
 static void init_coordinates(XPoint point[], int width, int height, int delta){
 
 	/*
-	 * 0-7 are outer points
+	 * 0-7 are outer points that are not corners of the application
 	 * 8-15 are inner points
 	 * 16, 17, 18, 19 are north east, nort west, south west, south east
 	 */
@@ -77,6 +79,9 @@ static void init_coordinates(XPoint point[], int width, int height, int delta){
 
 }
 
+/* Create X regions based on the array of XPoint and name them accordingly with
+ * their respective numbers
+ */
 static void init_regions(Window toplevel, XPoint point[], int size)
 {
 	Window region_window;
@@ -129,6 +134,8 @@ static void init_colormap()
 	imlib_context_set_color_modifier(modifier);
 }
 
+/* Draw the lines defining the regions
+ */
 static void draw_grid(Pixmap pixmap, XPoint point[])
 {
 	XColor grid_color, exact;
@@ -160,6 +167,8 @@ static void draw_grid(Pixmap pixmap, XPoint point[])
 
 }
 
+/* Load the image containing the charset, eventually changing the color
+ */
 static int load_charset(int num, int width, int height){
 	Visual *vis;
 	Colormap cm;
@@ -286,6 +295,9 @@ static int set_window_properties(Window toplevel){
 	return 0;
 }
 
+/* Redraw the application window with the current used charset (normal,
+ * capitalized or free chars)
+ */
 void update_display(Window toplevel, int shift, int help){
 
 	XClearWindow(dpy, toplevel);
@@ -299,6 +311,8 @@ void update_display(Window toplevel, int shift, int help){
 	XSync(dpy, False);
 }
 
+/* Draw the application window
+ */
 int create_window(Window win, int size){
 	int delta, i;
 	int status = 0;
@@ -327,6 +341,9 @@ int create_window(Window win, int size){
 	return status;
 }
 
+/* Free currently used pixmap for charset images and reload them using the
+ * appropriate size
+ */
 Window resize_window(Window win, int number){
 	int size;
 
@@ -349,6 +366,8 @@ Window resize_window(Window win, int number){
 	return win;
 }
 
+/* Initialise the application window
+ */
 int init_window(Window win){
 	unsigned long valuemask;
 	XGCValues xgc;

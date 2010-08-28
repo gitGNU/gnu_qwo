@@ -36,6 +36,9 @@ Copyright (C) 2008-2009 Charles Clement\n\
 qwo comes with ABSOLUTELY NO WARRANTY. This is free software,\n\
 and you are welcome to redistribute it under certain conditions.\n";
 
+/*
+ * Default charset
+ */
 char charset[][MAX_REGIONS] = {
 		"a,zz""?>>c",
 		"debb???d",
@@ -47,6 +50,9 @@ char charset[][MAX_REGIONS] = {
 		"yy???xx<"
 };
 
+/*
+ * Charset for free gestures, not beginning or ending in the center region
+ */
 KeySym char_free[MAX_REGIONS][MAX_REGIONS] = {
 	{XK_5, 0xffff, XK_Up, 0xffff, XK_Right, XK_backslash, XK_0, XK_slash, XK_Left},
 	{XK_grave, XK_1, XK_Tab, XK_equal, 0xffff, XK_braceleft, XK_bracketleft, XK_parenleft, XK_bar},
@@ -82,6 +88,9 @@ void print_version(){
 	fprintf(stdout, copyright_notice);
 }
 
+/*
+ * Get modifier keycodes
+ */
 int init_keycodes(){
 	Shift_code = XKeysymToKeycode(dpy, XK_Shift_L);
 	Control_code = XKeysymToKeycode(dpy, XK_Control_L);
@@ -90,6 +99,9 @@ int init_keycodes(){
 	return 0;
 }
 
+/*
+ * Return the region number from the window region number
+ */
 char get_region_name(Window win) {
 	char *region_name;
 	char value;
@@ -101,6 +113,9 @@ char get_region_name(Window win) {
 	return value;
 }
 
+/*
+ * Send key to the Xorg server
+ */
 void send_key(KeyCode code, KeyCode modifier)
 {
 	if (modifier)
@@ -191,6 +206,7 @@ int main(int argc, char **argv)
 		XNextEvent(dpy, &e);
 		switch (e.type) {
 		case ButtonPress:
+			/* Start of a gesture, first entered region */
 			region = get_region_name(e.xbutton.window);
 			XUngrabPointer(dpy, CurrentTime);
 			buffer[0] = region;
@@ -199,6 +215,7 @@ int main(int argc, char **argv)
 			sent = 0;
 			break;
 		case ButtonRelease:
+			/* End of a gesture, last entered region */
 			region = get_region_name(e.xbutton.window);
 			if (buffer[0] == 0 && !region && sent)
 				break;
@@ -214,6 +231,7 @@ int main(int argc, char **argv)
 				help_screen = !help_screen;
 				update_display(toplevel, shift_modifier, help_screen);
 			} else {
+				/* Send free gesture character */
 				code = XKeysymToKeycode(dpy, ksym);
 
 				for (state_mod = 0; state_mod < 4; state_mod++) {
@@ -222,6 +240,7 @@ int main(int argc, char **argv)
 					}
 				}
 
+				/* Update shift modifier information */
 				if (state_mod)
 					send_key(code, Shift_code);
 				else
@@ -230,11 +249,15 @@ int main(int argc, char **argv)
 			buffer_count = 0;
 			break;
 		case EnterNotify:
+			/* Crossing a region */
 			region = get_region_name(e.xcrossing.window);
 			KeySym index;
 
 			char c = '\0';
 
+				/* Is the gesture a normal character, starting
+				 * and ending in region 0
+				 */
 			if ((region == 0) && buffer_count > 1 && buffer[0] == 0){
 
 				if ((buffer[1] == buffer[buffer_count - 1]) && (buffer_count > 2)) {
@@ -266,7 +289,8 @@ int main(int argc, char **argv)
 
 				if (c == '<') {
 					if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
-							// Erase all buffer
+							/* Erase all character buffer
+							 */
 					} else {
 						if (buffer_count == 2) {
 						code = XKeysymToKeycode(dpy, XK_BackSpace);
@@ -274,6 +298,9 @@ int main(int argc, char **argv)
 					}
 					send_key(code, 0);
 				} else if (c == '>') {
+					/* Internal representation for the Shift
+					 * modifier
+					 */
 					if (buffer_count == 2) {
 						if (e.xcrossing.time - last_cross_timestamp > LONG_EXPOSURE_DELAY) {
 							code = XKeysymToKeycode(dpy, XK_Return);
@@ -298,6 +325,9 @@ int main(int argc, char **argv)
 						break;
 					}
 				} else if (code) {
+					/* Send the character taking the current
+					 * modifiers into account
+					 */
 					if ((shift_modifier && isalpha(c)) || state_mod) {
 						send_key(code, Shift_code);
 					} else if (ctrl_modifier) {
@@ -316,21 +346,29 @@ int main(int argc, char **argv)
 					}
 				}
 
+				/* Restore buffer data
+				 */
 				sent = 1;
 				buffer_count = 1;
 				buffer[0] = 0;
 				break;
 			}
 
+			/* Only > and < can react to timely events
+			 */
 			if(buffer_count == 1) {
 				last_cross_timestamp = e.xcrossing.time;
 			}
 
+			/* Add current region to the buffer
+			 */
 			if (!buffer_count || (buffer[buffer_count - 1] != region)) {
 				buffer[buffer_count] = region;
 				buffer_count++;
 			}
 
+			/* Handle the gesture to resize the window
+			 */
 			if(buffer_count == 9 && buffer[0] == buffer[buffer_count - 1]){
 				int diff;
 				XNextEvent(dpy, &e);
@@ -367,6 +405,8 @@ int main(int argc, char **argv)
 			update_display(toplevel, shift_modifier, help_screen);
 			break;
 		case ClientMessage:
+			/* Update window visibility based on WM events
+			 */
 			if ((e.xclient.message_type == mb_im_invoker_command) ||
 				(e.xclient.message_type == mtp_im_invoker_command)) {
 				if (e.xclient.data.l[0] == KeyboardShow) {
